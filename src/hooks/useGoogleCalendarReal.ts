@@ -3,39 +3,33 @@ import { useState, useEffect } from 'react'
 import { Appointment } from '@/types/appointment'
 import { GoogleCalendarService } from '@/services/googleCalendar'
 import { useAuth } from './useAuth'
+import { useGoogleOAuth } from './useGoogleOAuth'
 
 export function useGoogleCalendarReal() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isGapiLoaded, setIsGapiLoaded] = useState(false)
   const { user } = useAuth()
+  const { 
+    isSignedIn: isGoogleSignedIn, 
+    isInitialized: isGoogleInitialized, 
+    error: googleError,
+    signIn: googleSignIn,
+    signOut: googleSignOut,
+    clearError: clearGoogleError
+  } = useGoogleOAuth()
 
   const calendarService = new GoogleCalendarService()
 
-  // Carrega a API do Google
-  useEffect(() => {
-    const loadGoogleAPI = () => {
-      const script = document.createElement('script')
-      script.src = 'https://apis.google.com/js/api.js'
-      script.onload = () => {
-        setIsGapiLoaded(true)
-      }
-      script.onerror = () => {
-        setError('Erro ao carregar a API do Google')
-      }
-      document.head.appendChild(script)
-    }
-
-    if (!window.gapi) {
-      loadGoogleAPI()
-    } else {
-      setIsGapiLoaded(true)
-    }
-  }, [])
-
   const fetchAppointments = async () => {
-    if (!isGapiLoaded || !user) return
+    if (!isGoogleInitialized || !isGoogleSignedIn || !user) {
+      console.log('Não é possível buscar eventos:', {
+        isGoogleInitialized,
+        isGoogleSignedIn,
+        hasUser: !!user
+      })
+      return
+    }
 
     setLoading(true)
     setError(null)
@@ -47,19 +41,25 @@ export function useGoogleCalendarReal() {
       )
       
       setAppointments(convertedAppointments)
+      console.log(`Carregados ${convertedAppointments.length} agendamentos do Google Calendar`)
     } catch (err: any) {
-      setError(err.message || 'Erro ao carregar agendamentos')
-      console.error('Erro:', err)
+      const errorMessage = err.message || 'Erro ao carregar agendamentos'
+      setError(errorMessage)
+      console.error('Erro ao buscar eventos:', err)
     } finally {
       setLoading(false)
     }
   }
 
+  // Auto-fetch quando Google estiver autenticado
   useEffect(() => {
-    if (isGapiLoaded && user) {
+    if (isGoogleInitialized && isGoogleSignedIn && user) {
       fetchAppointments()
     }
-  }, [isGapiLoaded, user])
+  }, [isGoogleInitialized, isGoogleSignedIn, user])
+
+  // Combinar erros do Google OAuth com erros locais
+  const combinedError = error || googleError
 
   const getTodayAppointments = () => {
     const today = new Date()
@@ -78,10 +78,18 @@ export function useGoogleCalendarReal() {
   return {
     appointments,
     loading,
-    error,
+    error: combinedError,
     fetchAppointments,
     getTodayAppointments,
     getUpcomingAppointments,
-    isGapiLoaded
+    // Estados do Google OAuth
+    isGoogleInitialized,
+    isGoogleSignedIn,
+    googleSignIn,
+    googleSignOut,
+    clearError: () => {
+      setError(null)
+      clearGoogleError()
+    }
   }
 }

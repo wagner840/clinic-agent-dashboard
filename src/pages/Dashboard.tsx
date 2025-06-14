@@ -1,5 +1,5 @@
 
-import { Calendar, Clock, Users, Activity } from 'lucide-react'
+import { Calendar, Clock, Users, Activity, AlertCircle } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/useAuth'
@@ -15,19 +15,32 @@ export default function Dashboard() {
     error, 
     getTodayAppointments, 
     getUpcomingAppointments,
-    isGapiLoaded,
-    fetchAppointments
+    isGoogleInitialized,
+    isGoogleSignedIn,
+    googleSignIn,
+    googleSignOut,
+    fetchAppointments,
+    clearError
   } = useGoogleCalendarReal()
 
   const todayAppointments = getTodayAppointments()
   const upcomingAppointments = getUpcomingAppointments()
 
-  console.log('Google Calendar API status:', {
-    isGapiLoaded,
+  console.log('Google Calendar OAuth status:', {
+    isGoogleInitialized,
+    isGoogleSignedIn,
     appointmentsCount: appointments.length,
     loading,
     error
   })
+
+  const handleGoogleAuth = async () => {
+    if (isGoogleSignedIn) {
+      await googleSignOut()
+    } else {
+      await googleSignIn()
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -45,18 +58,37 @@ export default function Dashboard() {
               <span className="text-sm text-gray-600">
                 Olá, Dr(a). {user?.email}
               </span>
-              {!isGapiLoaded && (
+              
+              {/* Status da API Google */}
+              {!isGoogleInitialized && (
                 <span className="text-xs text-orange-600">
                   Carregando Google API...
                 </span>
               )}
-              <Button 
-                variant="outline" 
-                onClick={fetchAppointments}
-                disabled={loading || !isGapiLoaded}
-              >
-                {loading ? 'Sincronizando...' : 'Sincronizar'}
-              </Button>
+
+              {/* Botão de autenticação Google */}
+              {isGoogleInitialized && (
+                <Button 
+                  variant="outline" 
+                  onClick={handleGoogleAuth}
+                  disabled={loading}
+                  className={isGoogleSignedIn ? "border-green-500 text-green-700" : "border-red-500 text-red-700"}
+                >
+                  {isGoogleSignedIn ? 'Desconectar Google' : 'Conectar Google Calendar'}
+                </Button>
+              )}
+
+              {/* Botão de sincronização */}
+              {isGoogleSignedIn && (
+                <Button 
+                  variant="outline" 
+                  onClick={fetchAppointments}
+                  disabled={loading}
+                >
+                  {loading ? 'Sincronizando...' : 'Sincronizar'}
+                </Button>
+              )}
+
               <Button variant="outline" onClick={signOut}>
                 Sair
               </Button>
@@ -66,22 +98,57 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Status da API */}
+        {/* Alerta de autenticação Google */}
+        {isGoogleInitialized && !isGoogleSignedIn && (
+          <Card className="mb-6 border-blue-200 bg-blue-50">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2 text-blue-800">
+                <AlertCircle className="h-5 w-5" />
+                <div>
+                  <strong>Google Calendar não conectado</strong>
+                  <p className="text-sm mt-1">
+                    Para visualizar seus agendamentos reais, conecte sua conta do Google Calendar.
+                  </p>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-3"
+                onClick={googleSignIn}
+              >
+                Conectar Google Calendar
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Status de erro */}
         {error && (
           <Card className="mb-6 border-red-200 bg-red-50">
             <CardContent className="p-4">
               <div className="text-red-800">
                 <strong>Erro na integração:</strong> {error}
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mt-2"
-                onClick={fetchAppointments}
-                disabled={loading}
-              >
-                Tentar novamente
-              </Button>
+              <div className="flex space-x-2 mt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={clearError}
+                >
+                  Limpar erro
+                </Button>
+                {isGoogleSignedIn && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={fetchAppointments}
+                    disabled={loading}
+                  >
+                    Tentar novamente
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
         )}
@@ -103,19 +170,25 @@ export default function Dashboard() {
               </CardTitle>
               <CardDescription>
                 {todayAppointments.length} consulta(s) agendada(s)
-                {isGapiLoaded && (
+                {isGoogleSignedIn && (
                   <span className="ml-2 text-green-600">• Google Calendar conectado</span>
                 )}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {loading ? (
+              {!isGoogleSignedIn ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p className="mb-4">Conecte o Google Calendar para ver seus agendamentos</p>
+                  <Button onClick={googleSignIn} disabled={!isGoogleInitialized}>
+                    Conectar Google Calendar
+                  </Button>
+                </div>
+              ) : loading ? (
                 <div className="text-center py-4">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
                   Carregando do Google Calendar...
                 </div>
-              ) : error ? (
-                <div className="text-center py-4 text-red-600">{error}</div>
               ) : todayAppointments.length === 0 ? (
                 <div className="text-center py-4 text-gray-500">
                   Nenhum agendamento para hoje
@@ -145,7 +218,12 @@ export default function Dashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {loading ? (
+              {!isGoogleSignedIn ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Clock className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>Conecte o Google Calendar para ver próximos agendamentos</p>
+                </div>
+              ) : loading ? (
                 <div className="text-center py-4">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
                   Carregando...

@@ -1,7 +1,6 @@
 
 import { CalendarEvent, Appointment } from '@/types/appointment'
 
-const GOOGLE_API_KEY = 'AIzaSyDt7Oi3Y2OQcj7r6zh8kFFrw8PWzVsSCF0'
 const CALENDAR_ID = 'primary'
 
 interface GoogleCalendarEvent {
@@ -23,22 +22,20 @@ interface GoogleCalendarEvent {
 }
 
 export class GoogleCalendarService {
-  private async initializeGapi() {
-    if (!window.gapi) {
-      throw new Error('Google API não carregada')
+  private ensureAuthenticated() {
+    if (!window.gapi?.auth2) {
+      throw new Error('Google API não foi inicializada')
     }
 
-    await window.gapi.load('client', async () => {
-      await window.gapi.client.init({
-        apiKey: GOOGLE_API_KEY,
-        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest']
-      })
-    })
+    const authInstance = window.gapi.auth2.getAuthInstance()
+    if (!authInstance.isSignedIn.get()) {
+      throw new Error('Usuário não está autenticado com Google')
+    }
   }
 
   async fetchEvents(timeMin?: string, timeMax?: string): Promise<GoogleCalendarEvent[]> {
     try {
-      await this.initializeGapi()
+      this.ensureAuthenticated()
       
       const response = await window.gapi.client.calendar.events.list({
         calendarId: CALENDAR_ID,
@@ -46,7 +43,8 @@ export class GoogleCalendarService {
         timeMax: timeMax,
         showDeleted: false,
         singleEvents: true,
-        orderBy: 'startTime'
+        orderBy: 'startTime',
+        maxResults: 50
       })
 
       return response.result.items || []
@@ -58,7 +56,7 @@ export class GoogleCalendarService {
 
   async createEvent(event: CalendarEvent): Promise<string> {
     try {
-      await this.initializeGapi()
+      this.ensureAuthenticated()
       
       const response = await window.gapi.client.calendar.events.insert({
         calendarId: CALENDAR_ID,
@@ -68,6 +66,35 @@ export class GoogleCalendarService {
       return response.result.id
     } catch (error) {
       console.error('Erro ao criar evento no Google Calendar:', error)
+      throw error
+    }
+  }
+
+  async updateEvent(eventId: string, event: Partial<CalendarEvent>): Promise<void> {
+    try {
+      this.ensureAuthenticated()
+      
+      await window.gapi.client.calendar.events.patch({
+        calendarId: CALENDAR_ID,
+        eventId: eventId,
+        resource: event
+      })
+    } catch (error) {
+      console.error('Erro ao atualizar evento no Google Calendar:', error)
+      throw error
+    }
+  }
+
+  async deleteEvent(eventId: string): Promise<void> {
+    try {
+      this.ensureAuthenticated()
+      
+      await window.gapi.client.calendar.events.delete({
+        calendarId: CALENDAR_ID,
+        eventId: eventId
+      })
+    } catch (error) {
+      console.error('Erro ao deletar evento no Google Calendar:', error)
       throw error
     }
   }
@@ -114,7 +141,7 @@ export class GoogleCalendarService {
   }
 }
 
-// Adiciona tipos globais para a API do Google
+// Tipos globais para a API do Google
 declare global {
   interface Window {
     gapi: any
