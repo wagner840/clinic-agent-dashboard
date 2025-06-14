@@ -86,10 +86,22 @@ export function useGoogleOAuth() {
       }
 
       const authInstance = window.gapi.auth2.getAuthInstance()
-      // Força a seleção de conta sempre
+      
+      // Se já estiver logado, desconecta primeiro para forçar seleção de conta
+      if (authInstance.isSignedIn.get()) {
+        console.log('Desconectando conta atual para permitir seleção...')
+        await authInstance.signOut()
+        // Pequena pausa para garantir que a desconexão foi processada
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+
+      // Tenta fazer login com seleção forçada de conta
+      console.log('Iniciando processo de seleção de conta...')
       await authInstance.signIn({
-        prompt: 'select_account'
+        prompt: 'select_account consent',
+        include_granted_scopes: true
       })
+      
     } catch (error: any) {
       console.error('Erro no login Google:', error)
       setAuthState(prev => ({
@@ -105,6 +117,7 @@ export function useGoogleOAuth() {
 
       const authInstance = window.gapi.auth2.getAuthInstance()
       await authInstance.signOut()
+      console.log('Usuário desconectado com sucesso')
     } catch (error: any) {
       console.error('Erro no logout Google:', error)
       setAuthState(prev => ({
@@ -119,7 +132,12 @@ export function useGoogleOAuth() {
       if (!authState.isInitialized) return
 
       const authInstance = window.gapi.auth2.getAuthInstance()
-      await authInstance.disconnect()
+      
+      // Revoga completamente o acesso
+      if (authInstance.isSignedIn.get()) {
+        await authInstance.disconnect()
+        console.log('Acesso revogado completamente')
+      }
       
       // Limpar o estado após desconectar
       setAuthState(prev => ({
@@ -138,12 +156,17 @@ export function useGoogleOAuth() {
 
   const switchAccount = async () => {
     try {
-      // Desconecta completamente e força nova seleção
+      console.log('Iniciando troca de conta...')
+      
+      // Desconecta completamente primeiro
       await disconnect()
+      
       // Aguarda um pouco para garantir que a desconexão foi processada
-      setTimeout(async () => {
-        await signIn()
-      }, 500)
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      // Tenta novo login com seleção de conta
+      await signIn()
+      
     } catch (error: any) {
       console.error('Erro ao trocar conta:', error)
       setAuthState(prev => ({
