@@ -23,7 +23,7 @@ export function useGoogleCalendarReal() {
 
   const calendarService = new GoogleCalendarService()
 
-  const fetchAppointments = async () => {
+  const fetchAppointments = async (): Promise<void> => {
     if (!isGoogleInitialized || !isGoogleSignedIn || !user) {
       console.log('Não é possível buscar eventos:', {
         isGoogleInitialized,
@@ -77,6 +77,18 @@ export function useGoogleCalendarReal() {
       .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
   }
 
+  const handleGoogleSignIn = async (): Promise<void> => {
+    await googleSignIn()
+  }
+
+  const handleGoogleSignOut = async (): Promise<void> => {
+    await googleSignOut()
+  }
+
+  const handleForceAccountSelection = async (): Promise<void> => {
+    await forceAccountSelection()
+  }
+
   return {
     appointments,
     loading,
@@ -87,9 +99,9 @@ export function useGoogleCalendarReal() {
     // Estados do Google OAuth
     isGoogleInitialized,
     isGoogleSignedIn,
-    googleSignIn,
-    googleSignOut,
-    googleSwitchAccount: forceAccountSelection, // Usa a função de força de seleção
+    googleSignIn: handleGoogleSignIn,
+    googleSignOut: handleGoogleSignOut,
+    googleSwitchAccount: handleForceAccountSelection,
     clearError: () => {
       setError(null)
       clearGoogleError()
