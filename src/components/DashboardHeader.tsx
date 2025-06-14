@@ -10,6 +10,11 @@ interface DashboardHeaderProps {
   onGoogleAuth: () => Promise<void>
   onSwitchAccount: () => Promise<void>
   onSyncAppointments: () => Promise<void>
+  currentGoogleUser?: {
+    email: string
+    name: string
+    imageUrl: string
+  } | null
 }
 
 export function DashboardHeader({
@@ -18,7 +23,8 @@ export function DashboardHeader({
   loading,
   onGoogleAuth,
   onSwitchAccount,
-  onSyncAppointments
+  onSyncAppointments,
+  currentGoogleUser
 }: DashboardHeaderProps) {
   const { user, signOut } = useAuth()
 
@@ -36,6 +42,15 @@ export function DashboardHeader({
             <span className="text-sm text-gray-600">
               Olá, Dr(a). {user?.email}
             </span>
+            
+            {/* Informações da conta Google atual */}
+            {isGoogleSignedIn && currentGoogleUser && (
+              <div className="text-xs bg-green-50 px-2 py-1 rounded border border-green-200">
+                <span className="text-green-700">
+                  Google: {currentGoogleUser.email}
+                </span>
+              </div>
+            )}
             
             {/* Status da API Google */}
             {!isGoogleInitialized && (

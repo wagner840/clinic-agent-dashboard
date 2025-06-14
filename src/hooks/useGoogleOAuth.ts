@@ -92,11 +92,12 @@ export function useGoogleOAuth() {
       }
 
       if (forceAccountSelection) {
-        signInOptions.prompt = 'select_account consent'
+        signInOptions.prompt = 'select_account'
       }
       
       console.log('Iniciando login com opções:', signInOptions)
-      await authInstance.signIn(signInOptions)
+      const user = await authInstance.signIn(signInOptions)
+      console.log('Login realizado com sucesso:', user.getBasicProfile().getEmail())
       
     } catch (error: any) {
       console.error('Erro no login Google:', error)
@@ -154,18 +155,7 @@ export function useGoogleOAuth() {
     try {
       console.log('Iniciando troca de conta...')
       
-      const authInstance = window.gapi.auth2.getAuthInstance()
-      
-      // Se estiver logado, desconecta primeiro
-      if (authInstance.isSignedIn.get()) {
-        console.log('Desconectando conta atual...')
-        await authInstance.signOut()
-        
-        // Aguarda um pouco para garantir que a desconexão foi processada
-        await new Promise(resolve => setTimeout(resolve, 1000))
-      }
-      
-      // Agora faz login com prompt de seleção de conta
+      // Força uma nova seleção de conta com opções mais agressivas
       await signIn(true)
       
     } catch (error: any) {
@@ -178,11 +168,49 @@ export function useGoogleOAuth() {
   }
 
   const forceAccountSelection = async () => {
-    await switchAccount()
+    try {
+      console.log('Forçando seleção de conta...')
+      
+      const authInstance = window.gapi.auth2.getAuthInstance()
+      
+      // Primeiro, desconecta se estiver conectado
+      if (authInstance.isSignedIn.get()) {
+        console.log('Desconectando conta atual...')
+        await authInstance.signOut()
+        
+        // Aguarda para garantir que a desconexão foi processada
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+      
+      // Força nova autenticação com prompt de seleção
+      console.log('Iniciando nova autenticação...')
+      await signIn(true)
+      
+    } catch (error: any) {
+      console.error('Erro ao forçar seleção de conta:', error)
+      setAuthState(prev => ({
+        ...prev,
+        error: error.message || 'Erro ao forçar seleção de conta'
+      }))
+    }
   }
 
   const clearError = () => {
     setAuthState(prev => ({ ...prev, error: null }))
+  }
+
+  const getCurrentUser = () => {
+    if (!authState.isInitialized || !authState.isSignedIn) return null
+    
+    const authInstance = window.gapi.auth2.getAuthInstance()
+    const user = authInstance.currentUser.get()
+    const profile = user.getBasicProfile()
+    
+    return {
+      email: profile.getEmail(),
+      name: profile.getName(),
+      imageUrl: profile.getImageUrl()
+    }
   }
 
   return {
@@ -192,6 +220,7 @@ export function useGoogleOAuth() {
     disconnect,
     switchAccount,
     forceAccountSelection,
-    clearError
+    clearError,
+    getCurrentUser
   }
 }

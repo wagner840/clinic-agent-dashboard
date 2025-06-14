@@ -1,5 +1,5 @@
 
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, User } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
@@ -11,6 +11,11 @@ interface GoogleAuthAlertsProps {
   onRetry: () => Promise<void>
   onClearError: () => void
   loading: boolean
+  currentGoogleUser?: {
+    email: string
+    name: string
+    imageUrl: string
+  } | null
 }
 
 export function GoogleAuthAlerts({
@@ -20,10 +25,36 @@ export function GoogleAuthAlerts({
   onGoogleSignIn,
   onRetry,
   onClearError,
-  loading
+  loading,
+  currentGoogleUser
 }: GoogleAuthAlertsProps) {
   return (
     <>
+      {/* Informações da conta Google conectada */}
+      {isGoogleSignedIn && currentGoogleUser && (
+        <Card className="mb-6 border-green-200 bg-green-50">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <div className="flex-shrink-0">
+                <img 
+                  src={currentGoogleUser.imageUrl} 
+                  alt={currentGoogleUser.name}
+                  className="h-10 w-10 rounded-full"
+                />
+              </div>
+              <div className="flex-1">
+                <div className="text-green-800 font-medium">
+                  Google Calendar Conectado
+                </div>
+                <div className="text-sm text-green-700">
+                  {currentGoogleUser.name} ({currentGoogleUser.email})
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Alerta de autenticação Google */}
       {isGoogleInitialized && !isGoogleSignedIn && (
         <Card className="mb-6 border-blue-200 bg-blue-50">

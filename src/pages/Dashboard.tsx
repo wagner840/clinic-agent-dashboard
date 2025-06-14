@@ -4,6 +4,7 @@ import { DashboardStats } from '@/components/DashboardStats'
 import { DashboardHeader } from '@/components/DashboardHeader'
 import { GoogleAuthAlerts } from '@/components/GoogleAuthAlerts'
 import { AppointmentsSection } from '@/components/AppointmentsSection'
+import { useGoogleOAuth } from '@/hooks/useGoogleOAuth'
 
 export default function Dashboard() {
   const { 
@@ -21,15 +22,19 @@ export default function Dashboard() {
     clearError
   } = useGoogleCalendarReal()
 
+  const { getCurrentUser } = useGoogleOAuth()
+
   const todayAppointments = getTodayAppointments()
   const upcomingAppointments = getUpcomingAppointments()
+  const currentGoogleUser = getCurrentUser()
 
   console.log('Google Calendar OAuth status:', {
     isGoogleInitialized,
     isGoogleSignedIn,
     appointmentsCount: appointments.length,
     loading,
-    error
+    error,
+    currentUser: currentGoogleUser
   })
 
   const handleGoogleAuth = async (): Promise<void> => {
@@ -41,6 +46,7 @@ export default function Dashboard() {
   }
 
   const handleSwitchAccount = async (): Promise<void> => {
+    console.log('Botão de troca de conta clicado')
     await googleSwitchAccount()
   }
 
@@ -53,6 +59,7 @@ export default function Dashboard() {
         onGoogleAuth={handleGoogleAuth}
         onSwitchAccount={handleSwitchAccount}
         onSyncAppointments={fetchAppointments}
+        currentGoogleUser={currentGoogleUser}
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -64,6 +71,7 @@ export default function Dashboard() {
           onRetry={fetchAppointments}
           onClearError={clearError}
           loading={loading}
+          currentGoogleUser={currentGoogleUser}
         />
 
         {/* Stats Cards */}
