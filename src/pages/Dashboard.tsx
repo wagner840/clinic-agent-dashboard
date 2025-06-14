@@ -1,5 +1,5 @@
 
-import { Calendar, Clock, Users, Activity, AlertCircle } from 'lucide-react'
+import { Calendar, Clock, Users, Activity, AlertCircle, RefreshCw } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/useAuth'
@@ -19,6 +19,7 @@ export default function Dashboard() {
     isGoogleSignedIn,
     googleSignIn,
     googleSignOut,
+    googleSwitchAccount,
     fetchAppointments,
     clearError
   } = useGoogleCalendarReal()
@@ -40,6 +41,10 @@ export default function Dashboard() {
     } else {
       await googleSignIn()
     }
+  }
+
+  const handleSwitchAccount = async () => {
+    await googleSwitchAccount()
   }
 
   return (
@@ -66,16 +71,31 @@ export default function Dashboard() {
                 </span>
               )}
 
-              {/* Botão de autenticação Google */}
+              {/* Botões de autenticação Google */}
               {isGoogleInitialized && (
-                <Button 
-                  variant="outline" 
-                  onClick={handleGoogleAuth}
-                  disabled={loading}
-                  className={isGoogleSignedIn ? "border-green-500 text-green-700" : "border-red-500 text-red-700"}
-                >
-                  {isGoogleSignedIn ? 'Desconectar Google' : 'Conectar Google Calendar'}
-                </Button>
+                <div className="flex items-center space-x-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleGoogleAuth}
+                    disabled={loading}
+                    className={isGoogleSignedIn ? "border-green-500 text-green-700" : "border-red-500 text-red-700"}
+                  >
+                    {isGoogleSignedIn ? 'Desconectar Google' : 'Conectar Google Calendar'}
+                  </Button>
+
+                  {/* Botão para trocar conta */}
+                  {isGoogleSignedIn && (
+                    <Button 
+                      variant="outline" 
+                      onClick={handleSwitchAccount}
+                      disabled={loading}
+                      className="border-blue-500 text-blue-700"
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Trocar Conta
+                    </Button>
+                  )}
+                </div>
               )}
 
               {/* Botão de sincronização */}

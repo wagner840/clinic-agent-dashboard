@@ -86,7 +86,10 @@ export function useGoogleOAuth() {
       }
 
       const authInstance = window.gapi.auth2.getAuthInstance()
-      await authInstance.signIn()
+      // Força a seleção de conta sempre
+      await authInstance.signIn({
+        prompt: 'select_account'
+      })
     } catch (error: any) {
       console.error('Erro no login Google:', error)
       setAuthState(prev => ({
@@ -111,6 +114,45 @@ export function useGoogleOAuth() {
     }
   }
 
+  const disconnect = async () => {
+    try {
+      if (!authState.isInitialized) return
+
+      const authInstance = window.gapi.auth2.getAuthInstance()
+      await authInstance.disconnect()
+      
+      // Limpar o estado após desconectar
+      setAuthState(prev => ({
+        ...prev,
+        isSignedIn: false,
+        accessToken: null
+      }))
+    } catch (error: any) {
+      console.error('Erro ao desconectar Google:', error)
+      setAuthState(prev => ({
+        ...prev,
+        error: error.message || 'Erro ao desconectar'
+      }))
+    }
+  }
+
+  const switchAccount = async () => {
+    try {
+      // Desconecta completamente e força nova seleção
+      await disconnect()
+      // Aguarda um pouco para garantir que a desconexão foi processada
+      setTimeout(async () => {
+        await signIn()
+      }, 500)
+    } catch (error: any) {
+      console.error('Erro ao trocar conta:', error)
+      setAuthState(prev => ({
+        ...prev,
+        error: error.message || 'Erro ao trocar conta'
+      }))
+    }
+  }
+
   const clearError = () => {
     setAuthState(prev => ({ ...prev, error: null }))
   }
@@ -119,6 +161,8 @@ export function useGoogleOAuth() {
     ...authState,
     signIn,
     signOut,
+    disconnect,
+    switchAccount,
     clearError
   }
 }
