@@ -17,6 +17,7 @@ export function useGoogleCalendarReal() {
     signIn: googleSignIn,
     signOut: googleSignOut,
     switchAccount: googleSwitchAccount,
+    forceAccountSelection,
     clearError: clearGoogleError
   } = useGoogleOAuth()
 
@@ -88,7 +89,7 @@ export function useGoogleCalendarReal() {
     isGoogleSignedIn,
     googleSignIn,
     googleSignOut,
-    googleSwitchAccount,
+    googleSwitchAccount: forceAccountSelection, // Usa a função de força de seleção
     clearError: () => {
       setError(null)
       clearGoogleError()

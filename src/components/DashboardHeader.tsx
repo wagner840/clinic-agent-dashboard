@@ -1,5 +1,5 @@
 
-import { Activity, AlertCircle, RefreshCw } from 'lucide-react'
+import { Activity, AlertCircle, RefreshCw, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -56,18 +56,17 @@ export function DashboardHeader({
                   {isGoogleSignedIn ? 'Desconectar Google' : 'Conectar Google Calendar'}
                 </Button>
 
-                {/* Botão para trocar conta */}
-                {isGoogleSignedIn && (
-                  <Button 
-                    variant="outline" 
-                    onClick={onSwitchAccount}
-                    disabled={loading}
-                    className="border-blue-500 text-blue-700"
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Trocar Conta
-                  </Button>
-                )}
+                {/* Botão para forçar seleção de conta */}
+                <Button 
+                  variant="outline" 
+                  onClick={onSwitchAccount}
+                  disabled={loading}
+                  className="border-blue-500 text-blue-700"
+                  title="Selecionar conta diferente"
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Trocar Conta
+                </Button>
               </div>
             )}
 
