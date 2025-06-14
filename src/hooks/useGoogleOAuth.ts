@@ -45,11 +45,23 @@ export function useGoogleOAuth() {
         discoveryDocs: [DISCOVERY_DOC]
       })
 
-      console.log('Obtendo instância de auth...')
-      const authInstance = window.gapi.auth2.getAuthInstance()
+      console.log('Aguardando instância de auth...')
+      // Aguardar até que a instância de auth esteja disponível
+      let authInstance = null
+      let attempts = 0
+      const maxAttempts = 10
+      
+      while (!authInstance && attempts < maxAttempts) {
+        authInstance = window.gapi.auth2.getAuthInstance()
+        if (!authInstance) {
+          console.log(`Tentativa ${attempts + 1}: aguardando instância de auth...`)
+          await new Promise(resolve => setTimeout(resolve, 100))
+          attempts++
+        }
+      }
       
       if (!authInstance) {
-        console.error('Falha ao obter instância de auth')
+        console.error('Falha ao obter instância de auth após múltiplas tentativas')
         throw new Error('Falha ao inicializar instância de autenticação Google')
       }
 
