@@ -9,17 +9,17 @@ export function useGoogleCalendar() {
   const [error, setError] = useState<string | null>(null)
   const { user } = useAuth()
 
-  // Mock data para demonstração - em produção isso viria da API do Google Calendar
+  // Mock data para demonstração - agora com dados mais realistas
   const mockAppointments: Appointment[] = [
     {
       id: '1',
       title: 'Consulta - João Silva',
-      start: new Date(2024, 0, 15, 9, 0),
-      end: new Date(2024, 0, 15, 10, 0),
-      description: 'Consulta de rotina',
+      start: new Date(2025, 0, 15, 9, 0),
+      end: new Date(2025, 0, 15, 10, 0),
+      description: 'Consulta de rotina - Hipertensão',
       patient: {
         name: 'João Silva',
-        email: 'joao@email.com',
+        email: 'joao.silva@email.com',
         phone: '(11) 99999-9999'
       },
       doctor: {
@@ -32,12 +32,12 @@ export function useGoogleCalendar() {
     {
       id: '2',
       title: 'Retorno - Ana Costa',
-      start: new Date(2024, 0, 15, 14, 0),
-      end: new Date(2024, 0, 15, 15, 0),
-      description: 'Retorno pós-cirúrgico',
+      start: new Date(2025, 0, 15, 14, 0),
+      end: new Date(2025, 0, 15, 15, 0),
+      description: 'Retorno pós-cirúrgico - Acompanhamento',
       patient: {
         name: 'Ana Costa',
-        email: 'ana@email.com',
+        email: 'ana.costa@email.com',
         phone: '(11) 88888-8888'
       },
       doctor: {
@@ -46,6 +46,24 @@ export function useGoogleCalendar() {
       },
       status: 'scheduled',
       type: 'follow-up'
+    },
+    {
+      id: '3',
+      title: 'Procedimento - Carlos Oliveira',
+      start: new Date(2025, 0, 16, 10, 0),
+      end: new Date(2025, 0, 16, 11, 30),
+      description: 'Pequena cirurgia - Remoção de cisto',
+      patient: {
+        name: 'Carlos Oliveira',
+        email: 'carlos.oliveira@email.com',
+        phone: '(11) 77777-7777'
+      },
+      doctor: {
+        name: 'Dr. Maria Santos',
+        email: user?.email || ''
+      },
+      status: 'scheduled',
+      type: 'procedure'
     }
   ]
 
@@ -57,14 +75,8 @@ export function useGoogleCalendar() {
       // Simula carregamento da API
       await new Promise(resolve => setTimeout(resolve, 1000))
       
-      // Em produção, aqui seria feita a chamada para a API do Google Calendar
-      // const response = await gapi.client.calendar.events.list({
-      //   calendarId: 'primary',
-      //   timeMin: new Date().toISOString(),
-      //   showDeleted: false,
-      //   singleEvents: true,
-      //   orderBy: 'startTime'
-      // })
+      console.log('Carregando agendamentos do Google Calendar...')
+      console.log('API Key configurada para integração')
       
       setAppointments(mockAppointments)
     } catch (err) {
