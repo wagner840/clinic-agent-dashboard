@@ -32,7 +32,7 @@ export default function Dashboard() {
     error
   })
 
-  const handleGoogleAuth = async () => {
+  const handleGoogleAuth = async (): Promise<void> => {
     if (isGoogleSignedIn) {
       await googleSignOut()
     } else {
@@ -40,7 +40,7 @@ export default function Dashboard() {
     }
   }
 
-  const handleSwitchAccount = async () => {
+  const handleSwitchAccount = async (): Promise<void> => {
     await googleSwitchAccount()
   }
 
