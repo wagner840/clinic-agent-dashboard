@@ -26,21 +26,34 @@ export function useGoogleOAuth() {
 
   const initializeGapi = async () => {
     try {
+      console.log('Iniciando inicialização do Google API...')
+      
       if (!window.gapi) {
+        console.log('Carregando script do Google API...')
         await loadGapiScript()
       }
 
+      console.log('Carregando auth2...')
       await new Promise<void>((resolve) => {
         window.gapi.load('auth2', resolve)
       })
 
+      console.log('Inicializando cliente Google...')
       await window.gapi.client.init({
         clientId: GOOGLE_CLIENT_ID,
         scope: GOOGLE_SCOPES,
         discoveryDocs: [DISCOVERY_DOC]
       })
 
+      console.log('Obtendo instância de auth...')
       const authInstance = window.gapi.auth2.getAuthInstance()
+      
+      if (!authInstance) {
+        console.error('Falha ao obter instância de auth')
+        throw new Error('Falha ao inicializar instância de autenticação Google')
+      }
+
+      console.log('Instância de auth obtida com sucesso')
       const isSignedIn = authInstance.isSignedIn.get()
       
       setAuthState(prev => ({
@@ -52,12 +65,15 @@ export function useGoogleOAuth() {
 
       // Escuta mudanças no estado de autenticação
       authInstance.isSignedIn.listen((signedIn: boolean) => {
+        console.log('Estado de autenticação mudou:', signedIn)
         setAuthState(prev => ({
           ...prev,
           isSignedIn: signedIn,
           accessToken: signedIn ? authInstance.currentUser.get().getAuthResponse().access_token : null
         }))
       })
+
+      console.log('Inicialização do Google API concluída com sucesso')
 
     } catch (error: any) {
       console.error('Erro ao inicializar Google API:', error)
@@ -81,11 +97,17 @@ export function useGoogleOAuth() {
 
   const signIn = async (forceAccountSelection = false) => {
     try {
+      console.log('Tentando fazer login...', { forceAccountSelection })
+      
       if (!authState.isInitialized) {
         throw new Error('Google API não foi inicializada')
       }
 
       const authInstance = window.gapi.auth2.getAuthInstance()
+      
+      if (!authInstance) {
+        throw new Error('Instância de autenticação não está disponível')
+      }
       
       const signInOptions: any = {
         include_granted_scopes: true
@@ -110,9 +132,17 @@ export function useGoogleOAuth() {
 
   const signOut = async () => {
     try {
+      console.log('Tentando fazer logout...')
+      
       if (!authState.isInitialized) return
 
       const authInstance = window.gapi.auth2.getAuthInstance()
+      
+      if (!authInstance) {
+        console.warn('Instância de autenticação não encontrada para logout')
+        return
+      }
+      
       await authInstance.signOut()
       console.log('Usuário desconectado com sucesso')
     } catch (error: any) {
@@ -126,9 +156,16 @@ export function useGoogleOAuth() {
 
   const disconnect = async () => {
     try {
+      console.log('Tentando desconectar...')
+      
       if (!authState.isInitialized) return
 
       const authInstance = window.gapi.auth2.getAuthInstance()
+      
+      if (!authInstance) {
+        console.warn('Instância de autenticação não encontrada para desconexão')
+        return
+      }
       
       // Revoga completamente o acesso
       if (authInstance.isSignedIn.get()) {
@@ -173,6 +210,10 @@ export function useGoogleOAuth() {
       
       const authInstance = window.gapi.auth2.getAuthInstance()
       
+      if (!authInstance) {
+        throw new Error('Instância de autenticação não está disponível')
+      }
+      
       // Primeiro, desconecta se estiver conectado
       if (authInstance.isSignedIn.get()) {
         console.log('Desconectando conta atual...')
@@ -203,6 +244,9 @@ export function useGoogleOAuth() {
     if (!authState.isInitialized || !authState.isSignedIn) return null
     
     const authInstance = window.gapi.auth2.getAuthInstance()
+    
+    if (!authInstance) return null
+    
     const user = authInstance.currentUser.get()
     const profile = user.getBasicProfile()
     
