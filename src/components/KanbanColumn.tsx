@@ -37,7 +37,7 @@ export function KanbanColumn({
   }
 
   return (
-    <Card className="h-fit">
+    <Card className="h-fit dark:bg-slate-800 dark:border-slate-700">
       <CardHeader className="pb-3 sm:pb-4">
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -57,12 +57,12 @@ export function KanbanColumn({
               {...provided.droppableProps}
               className={`
                 space-y-3 min-h-[200px] p-2 rounded-lg transition-colors
-                ${snapshot.isDraggingOver ? 'bg-blue-50 dark:bg-accent/40 border-2 border-dashed border-blue-300 dark:border-blue-700' : ''}
+                ${snapshot.isDraggingOver ? 'bg-blue-50 dark:bg-slate-700 border-2 border-dashed border-blue-300 dark:border-blue-500' : ''}
               `}
             >
               {appointments.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Icon className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-4 text-gray-300" />
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <Icon className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
                   <p className="text-xs sm:text-sm">{getEmptyMessage()}</p>
                 </div>
               ) : (

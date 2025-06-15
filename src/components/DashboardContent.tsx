@@ -1,3 +1,4 @@
+
 import { DashboardStats } from '@/components/DashboardStats'
 import { DashboardHeader } from '@/components/DashboardHeader'
 import { GoogleAuthAlerts } from '@/components/GoogleAuthAlerts'
@@ -111,7 +112,7 @@ export function DashboardContent({
               <div className="space-y-2">
                 <Label htmlFor="doctor-filter">Filtrar por Médico</Label>
                 <Select value={doctorFilter} onValueChange={onDoctorFilterChange}>
-                  <SelectTrigger id="doctor-filter" className="w-full sm:w-[280px] bg-white">
+                  <SelectTrigger id="doctor-filter" className="w-full sm:w-[280px] bg-white dark:bg-slate-800 dark:border-slate-600">
                     <SelectValue placeholder="Selecionar médico..." />
                   </SelectTrigger>
                   <SelectContent>

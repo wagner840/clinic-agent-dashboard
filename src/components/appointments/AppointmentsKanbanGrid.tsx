@@ -31,7 +31,7 @@ export function AppointmentsKanbanGrid({
           title="Hoje"
           appointments={todayAppointments}
           icon={Calendar}
-          badgeColor="bg-green-100 text-green-800 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800"
+          badgeColor="bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-200 dark:border-green-700"
           onMarkAsCompleted={onMarkAsCompleted}
           onCancelAppointment={onCancelAppointment}
           onReactivateAppointment={onReactivateAppointment}
@@ -42,7 +42,7 @@ export function AppointmentsKanbanGrid({
           title="Próximos"
           appointments={upcomingAppointments}
           icon={Clock}
-          badgeColor="bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800"
+          badgeColor="bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:border-blue-700"
           onMarkAsCompleted={onMarkAsCompleted}
           onCancelAppointment={onCancelAppointment}
           onReactivateAppointment={onReactivateAppointment}
@@ -53,7 +53,7 @@ export function AppointmentsKanbanGrid({
           title="Cancelados"
           appointments={cancelledAppointments}
           icon={XCircle}
-          badgeColor="bg-red-100 text-red-800 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800"
+          badgeColor="bg-red-100 text-red-800 border-red-200 dark:bg-red-900 dark:text-red-200 dark:border-red-700"
           onMarkAsCompleted={onMarkAsCompleted}
           onCancelAppointment={onCancelAppointment}
           onReactivateAppointment={onReactivateAppointment}
