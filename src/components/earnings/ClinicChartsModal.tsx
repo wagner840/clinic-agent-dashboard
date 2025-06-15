@@ -1,73 +1,63 @@
-
-import { useState } from 'react'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ChartContainer } from '@/components/ui/chart'
-import { TrendingUp, BarChart3, PieChart as PieChartIcon, X } from 'lucide-react'
-import { DoctorTotalEarnings } from '@/types/earnings'
-import { Appointment } from '@/types/appointment'
-import { ChartFilters, ChartFilterState } from './ChartFilters'
-import { ChartControls } from './charts/ChartControls'
-import { ChartRenderer } from './charts/ChartRenderer'
-import { ChartDataProcessor } from './charts/ChartDataProcessor'
-import { ChartLegend } from './charts/ChartLegend'
-import { SummaryCards } from './charts/SummaryCards'
-
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ChartContainer } from '@/components/ui/chart';
+import { TrendingUp, BarChart3, PieChart as PieChartIcon, X } from 'lucide-react';
+import { DoctorTotalEarnings } from '@/types/earnings';
+import { Appointment } from '@/types/appointment';
+import { ChartFilters, ChartFilterState } from './ChartFilters';
+import { ChartControls } from './charts/ChartControls';
+import { ChartRenderer } from './charts/ChartRenderer';
+import { ChartDataProcessor } from './charts/ChartDataProcessor';
+import { ChartLegend } from './charts/ChartLegend';
+import { SummaryCards } from './charts/SummaryCards';
 interface ClinicChartsModalProps {
-  isOpen: boolean
-  onClose: () => void
-  totalEarnings: DoctorTotalEarnings[]
-  appointments?: Appointment[]
+  isOpen: boolean;
+  onClose: () => void;
+  totalEarnings: DoctorTotalEarnings[];
+  appointments?: Appointment[];
 }
-
-export function ClinicChartsModal({ isOpen, onClose, totalEarnings, appointments = [] }: ClinicChartsModalProps) {
-  const [chartType, setChartType] = useState<'bar' | 'line' | 'pie'>('bar')
-  const [dataType, setDataType] = useState<'amount' | 'appointments'>('amount')
-  const [viewMode, setViewMode] = useState<'combined' | 'individual'>('combined')
-  const [selectedDoctor, setSelectedDoctor] = useState<string>('all')
-  const [comparisonMode, setComparisonMode] = useState<'none' | 'private-insurance'>('none')
+export function ClinicChartsModal({
+  isOpen,
+  onClose,
+  totalEarnings,
+  appointments = []
+}: ClinicChartsModalProps) {
+  const [chartType, setChartType] = useState<'bar' | 'line' | 'pie'>('bar');
+  const [dataType, setDataType] = useState<'amount' | 'appointments'>('amount');
+  const [viewMode, setViewMode] = useState<'combined' | 'individual'>('combined');
+  const [selectedDoctor, setSelectedDoctor] = useState<string>('all');
+  const [comparisonMode, setComparisonMode] = useState<'none' | 'private-insurance'>('none');
   const [filters, setFilters] = useState<ChartFilterState>({
     timeRange: 'all',
     dayOfWeek: 'all',
     month: 'all',
     year: 'all'
-  })
-
+  });
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
-    }).format(value)
-  }
-
-  const dataProcessor = new ChartDataProcessor(totalEarnings, filters, appointments)
-  const filteredEarnings = dataProcessor.getFilteredEarnings()
-  
+    }).format(value);
+  };
+  const dataProcessor = new ChartDataProcessor(totalEarnings, filters, appointments);
+  const filteredEarnings = dataProcessor.getFilteredEarnings();
   const prepareChartData = () => {
-    return viewMode === 'combined' 
-      ? dataProcessor.prepareCombinedData(dataType)
-      : dataProcessor.prepareIndividualData(dataType, selectedDoctor)
-  }
-
-  const chartData = prepareChartData()
-  const pieData = dataProcessor.preparePieData(chartData)
-  const availableDoctors = filteredEarnings.map(doctor => doctor.doctor_name)
-
-  const hasActiveFilters = filters.timeRange !== 'all' || filters.dayOfWeek !== 'all' || 
-                          filters.month !== 'all' || filters.year !== 'all'
-
+    return viewMode === 'combined' ? dataProcessor.prepareCombinedData(dataType) : dataProcessor.prepareIndividualData(dataType, selectedDoctor);
+  };
+  const chartData = prepareChartData();
+  const pieData = dataProcessor.preparePieData(chartData);
+  const availableDoctors = filteredEarnings.map(doctor => doctor.doctor_name);
+  const hasActiveFilters = filters.timeRange !== 'all' || filters.dayOfWeek !== 'all' || filters.month !== 'all' || filters.year !== 'all';
   const getChartTitle = () => {
-    const baseTitle = dataType === 'amount' ? 'Faturamento' : 'Consultas'
-    const viewTitle = viewMode === 'combined' ? ' - Total da Clínica' : ' por Médico'
-    const filterTitle = hasActiveFilters ? ' (Filtrado)' : ''
-    
-    return `${baseTitle}${viewTitle}${filterTitle}`
-  }
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    const baseTitle = dataType === 'amount' ? 'Faturamento' : 'Consultas';
+    const viewTitle = viewMode === 'combined' ? ' - Total da Clínica' : ' por Médico';
+    const filterTitle = hasActiveFilters ? ' (Filtrado)' : '';
+    return `${baseTitle}${viewTitle}${filterTitle}`;
+  };
+  return <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
@@ -78,11 +68,9 @@ export function ClinicChartsModal({ isOpen, onClose, totalEarnings, appointments
               </DialogTitle>
               <DialogDescription>
                 Visualize e compare os dados de faturamento e consultas
-                {hasActiveFilters && (
-                  <span className="block text-blue-600 font-medium mt-1">
+                {hasActiveFilters && <span className="block text-blue-600 font-medium mt-1">
                     Filtros ativos - {filteredEarnings.length} de {totalEarnings.length} médicos
-                  </span>
-                )}
+                  </span>}
               </DialogDescription>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose}>
@@ -93,25 +81,11 @@ export function ClinicChartsModal({ isOpen, onClose, totalEarnings, appointments
 
         <ChartFilters onFiltersChange={setFilters} />
 
-        <SummaryCards 
-          filteredEarnings={filteredEarnings}
-          totalEarnings={totalEarnings}
-          formatCurrency={formatCurrency}
-        />
+        <SummaryCards filteredEarnings={filteredEarnings} totalEarnings={totalEarnings} formatCurrency={formatCurrency} />
 
-        <ChartControls
-          viewMode={viewMode}
-          selectedDoctor={selectedDoctor}
-          dataType={dataType}
-          comparisonMode={comparisonMode}
-          availableDoctors={availableDoctors}
-          onViewModeChange={setViewMode}
-          onDoctorChange={setSelectedDoctor}
-          onDataTypeChange={setDataType}
-          onComparisonModeChange={setComparisonMode}
-        />
+        <ChartControls viewMode={viewMode} selectedDoctor={selectedDoctor} dataType={dataType} comparisonMode={comparisonMode} availableDoctors={availableDoctors} onViewModeChange={setViewMode} onDoctorChange={setSelectedDoctor} onDataTypeChange={setDataType} onComparisonModeChange={setComparisonMode} />
 
-        <Tabs value={chartType} onValueChange={(value) => setChartType(value as 'bar' | 'line' | 'pie')}>
+        <Tabs value={chartType} onValueChange={value => setChartType(value as 'bar' | 'line' | 'pie')}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="bar" className="flex items-center space-x-2">
               <BarChart3 className="h-4 w-4" />
@@ -134,20 +108,22 @@ export function ClinicChartsModal({ isOpen, onClose, totalEarnings, appointments
                   {getChartTitle()}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-0 my-[6px] mx-[240px]">
                 <ChartContainer config={{
-                  total: { label: "Total", color: "hsl(var(--primary))" },
-                  private: { label: "Particular", color: "#10b981" },
-                  insurance: { label: "Convênio", color: "#3b82f6" },
-                }}>
-                  <ChartRenderer
-                    chartType={chartType}
-                    chartData={chartData}
-                    pieData={pieData}
-                    dataType={dataType}
-                    comparisonMode={comparisonMode}
-                    formatCurrency={formatCurrency}
-                  />
+                total: {
+                  label: "Total",
+                  color: "hsl(var(--primary))"
+                },
+                private: {
+                  label: "Particular",
+                  color: "#10b981"
+                },
+                insurance: {
+                  label: "Convênio",
+                  color: "#3b82f6"
+                }
+              }}>
+                  <ChartRenderer chartType={chartType} chartData={chartData} pieData={pieData} dataType={dataType} comparisonMode={comparisonMode} formatCurrency={formatCurrency} />
                 </ChartContainer>
               </CardContent>
             </Card>
@@ -156,14 +132,11 @@ export function ClinicChartsModal({ isOpen, onClose, totalEarnings, appointments
 
         <ChartLegend comparisonMode={comparisonMode} chartType={chartType} />
 
-        {filteredEarnings.length === 0 && (
-          <div className="text-center py-8">
+        {filteredEarnings.length === 0 && <div className="text-center py-8">
             <div className="text-muted-foreground">
               Nenhum dado encontrado com os filtros aplicados.
             </div>
-          </div>
-        )}
+          </div>}
       </DialogContent>
-    </Dialog>
-  )
+    </Dialog>;
 }
