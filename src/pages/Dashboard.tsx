@@ -3,6 +3,7 @@ import { useGoogleCalendarReal } from '@/hooks/useGoogleCalendarReal'
 import { DashboardStats } from '@/components/DashboardStats'
 import { DashboardHeader } from '@/components/DashboardHeader'
 import { GoogleAuthAlerts } from '@/components/GoogleAuthAlerts'
+import { AppointmentsSection } from '@/components/AppointmentsSection'
 
 export default function Dashboard() {
   const { 

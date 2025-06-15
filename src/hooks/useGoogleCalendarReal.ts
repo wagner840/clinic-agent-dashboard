@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react'
 import { gapi } from 'gapi-script'
 import { Appointment } from '@/types/appointment'
@@ -101,22 +102,26 @@ export function useGoogleCalendarReal() {
 
   const handleGoogleSignIn = async () => {
     if (googleAuth) {
-      googleAuth.signIn().catch(err => {
+      try {
+        await googleAuth.signIn()
+      } catch (err: any) {
         console.error("Erro ao fazer login com Google:", err)
         if (err.error === 'popup_closed_by_user') {
           setError("A janela de login do Google foi fechada antes da conclusão.")
         } else {
           setError("Ocorreu um erro ao tentar fazer login com o Google.")
         }
-      })
+      }
     }
   }
 
   const handleGoogleSignOut = async () => {
     if (googleAuth) {
-      googleAuth.signOut().catch(err => {
+      try {
+        await googleAuth.signOut()
+      } catch (err) {
         console.error("Erro ao fazer logout do Google:", err)
-      })
+      }
     }
   }
 
@@ -138,8 +143,10 @@ export function useGoogleCalendarReal() {
     appointments,
     loading: loading || authLoading || !isGoogleInitialized,
     error,
-    fetchAppointments: () => {
-      if (accessToken) fetchAppointmentsCallback(accessToken)
+    fetchAppointments: async () => {
+      if (accessToken) {
+        await fetchAppointmentsCallback(accessToken)
+      }
     },
     getTodayAppointments,
     getUpcomingAppointments,
