@@ -7,7 +7,10 @@ import { useAuth } from './useAuth'
 import { GOOGLE_CALENDAR_SCOPES } from '@/lib/google'
 import { supabase } from '@/integrations/supabase/client'
 
-const TARGET_CALENDAR_NAMES = ['doutora anne', 'doutor iago']
+const TARGET_CALENDAR_IDS = [
+  'a4f94e53c7bbe793339545813e6c1ca2b586d70fb56e23407b47997926b3dafa@group.calendar.google.com', // Dra Anne Martins
+  'b70f9e7f14829bc83b3a3b86e742fb5c5a542b057b31b20ab7d0baffb4ad0f01@group.calendar.google.com'  // Dr Iago Kulpel
+]
 
 export function useGoogleCalendarReal() {
   const { user, loading: authLoading } = useAuth()
@@ -39,11 +42,11 @@ export function useGoogleCalendarReal() {
       const allCalendars = await calendarService.fetchCalendarList(token)
       
       const targetCalendars = allCalendars.filter(cal => 
-        TARGET_CALENDAR_NAMES.includes(cal.summary.toLowerCase())
+        TARGET_CALENDAR_IDS.includes(cal.id)
       )
 
       if (targetCalendars.length === 0) {
-        setError(`Nenhum dos calendários alvo (${TARGET_CALENDAR_NAMES.join(', ')}) foi encontrado na sua conta Google. Verifique os nomes e permissões.`)
+        setError(`Nenhum dos calendários alvo foi encontrado na sua conta Google. Verifique se os IDs de calendário estão corretos e se você tem permissão para acessá-los.`)
         setAppointments([])
         setLoading(false)
         return
