@@ -27,12 +27,16 @@ export function convertToAppointment(event: CalendarEvent, doctorEmail: string):
   const patientName = extractPatientName(event.summary)
   const patientEmail = event.attendees?.find(a => a.email !== doctorEmail)?.email || ''
   const patientPhone = extractPatientPhone(event.description)
+  const startDate = new Date(event.start.dateTime)
+  const endDate = new Date(event.end.dateTime)
   
   return {
     id: event.id,
     title: event.summary,
-    start: new Date(event.start.dateTime),
-    end: new Date(event.end.dateTime),
+    start: startDate,
+    end: endDate,
+    start_time: event.start.dateTime,
+    end_time: event.end.dateTime,
     description: event.description,
     patient: {
       name: patientName,
@@ -43,6 +47,9 @@ export function convertToAppointment(event: CalendarEvent, doctorEmail: string):
       name: 'Dr. Sistema',
       email: doctorEmail
     },
+    doctor_name: 'Dr. Sistema',
+    doctor_email: doctorEmail,
+    patient_name: patientName,
     status: convertGCalStatus(event.status),
     type: determineAppointmentType(event.summary)
   }
@@ -53,13 +60,19 @@ function extractPatientName(summary: string): string {
   return match ? match[1].trim() : summary
 }
 
-function determineAppointmentType(summary: string): 'consultation' | 'procedure' | 'follow-up' {
+function determineAppointmentType(summary: string): 'consultation' | 'procedure' | 'follow-up' | 'private' | 'insurance' {
   const lowerSummary = summary.toLowerCase()
   if (lowerSummary.includes('retorno') || lowerSummary.includes('follow')) {
     return 'follow-up'
   }
   if (lowerSummary.includes('procedimento') || lowerSummary.includes('cirurgia')) {
     return 'procedure'
+  }
+  if (lowerSummary.includes('particular') || lowerSummary.includes('private')) {
+    return 'private'
+  }
+  if (lowerSummary.includes('convênio') || lowerSummary.includes('insurance')) {
+    return 'insurance'
   }
   return 'consultation'
 }

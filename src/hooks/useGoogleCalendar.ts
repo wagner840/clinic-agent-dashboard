@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { Appointment, CalendarEvent } from '@/types/appointment'
 import { useAuth } from './useAuth'
@@ -16,6 +15,8 @@ export function useGoogleCalendar() {
       title: 'Consulta - João Silva',
       start: new Date(2025, 0, 15, 9, 0),
       end: new Date(2025, 0, 15, 10, 0),
+      start_time: new Date(2025, 0, 15, 9, 0).toISOString(),
+      end_time: new Date(2025, 0, 15, 10, 0).toISOString(),
       description: 'Consulta de rotina - Hipertensão',
       patient: {
         name: 'João Silva',
@@ -26,6 +27,9 @@ export function useGoogleCalendar() {
         name: 'Dr. Maria Santos',
         email: user?.email || ''
       },
+      doctor_name: 'Dr. Maria Santos',
+      doctor_email: user?.email || '',
+      patient_name: 'João Silva',
       status: 'scheduled',
       type: 'consultation'
     },
@@ -34,6 +38,8 @@ export function useGoogleCalendar() {
       title: 'Retorno - Ana Costa',
       start: new Date(2025, 0, 15, 14, 0),
       end: new Date(2025, 0, 15, 15, 0),
+      start_time: new Date(2025, 0, 15, 14, 0).toISOString(),
+      end_time: new Date(2025, 0, 15, 15, 0).toISOString(),
       description: 'Retorno pós-cirúrgico - Acompanhamento',
       patient: {
         name: 'Ana Costa',
@@ -44,6 +50,9 @@ export function useGoogleCalendar() {
         name: 'Dr. Maria Santos',
         email: user?.email || ''
       },
+      doctor_name: 'Dr. Maria Santos',
+      doctor_email: user?.email || '',
+      patient_name: 'Ana Costa',
       status: 'scheduled',
       type: 'follow-up'
     },
@@ -52,6 +61,8 @@ export function useGoogleCalendar() {
       title: 'Procedimento - Carlos Oliveira',
       start: new Date(2025, 0, 16, 10, 0),
       end: new Date(2025, 0, 16, 11, 30),
+      start_time: new Date(2025, 0, 16, 10, 0).toISOString(),
+      end_time: new Date(2025, 0, 16, 11, 30).toISOString(),
       description: 'Pequena cirurgia - Remoção de cisto',
       patient: {
         name: 'Carlos Oliveira',
@@ -62,6 +73,9 @@ export function useGoogleCalendar() {
         name: 'Dr. Maria Santos',
         email: user?.email || ''
       },
+      doctor_name: 'Dr. Maria Santos',
+      doctor_email: user?.email || '',
+      patient_name: 'Carlos Oliveira',
       status: 'scheduled',
       type: 'procedure'
     }

@@ -27,6 +27,8 @@ export function createTestAppointments(): Appointment[] {
       title: 'Consulta - Maria Silva',
       start: yesterday,
       end: new Date(yesterday.getTime() + 60 * 60 * 1000), // 1 hour later
+      start_time: yesterday.toISOString(),
+      end_time: new Date(yesterday.getTime() + 60 * 60 * 1000).toISOString(),
       patient: {
         name: 'Maria Silva',
         email: 'maria@test.com'
@@ -35,6 +37,9 @@ export function createTestAppointments(): Appointment[] {
         name: 'Dr. João',
         email: 'joao@test.com'
       },
+      doctor_name: 'Dr. João',
+      doctor_email: 'joao@test.com',
+      patient_name: 'Maria Silva',
       status: 'scheduled',
       type: 'consultation'
     },
@@ -43,6 +48,8 @@ export function createTestAppointments(): Appointment[] {
       title: 'Procedimento - João Santos',
       start: lastWeek,
       end: new Date(lastWeek.getTime() + 2 * 60 * 60 * 1000), // 2 hours later
+      start_time: lastWeek.toISOString(),
+      end_time: new Date(lastWeek.getTime() + 2 * 60 * 60 * 1000).toISOString(),
       patient: {
         name: 'João Santos',
         email: 'joao.santos@test.com'
@@ -51,6 +58,9 @@ export function createTestAppointments(): Appointment[] {
         name: 'Dr. João',
         email: 'joao@test.com'
       },
+      doctor_name: 'Dr. João',
+      doctor_email: 'joao@test.com',
+      patient_name: 'João Santos',
       status: 'scheduled',
       type: 'procedure'
     },
@@ -59,6 +69,8 @@ export function createTestAppointments(): Appointment[] {
       title: 'Consulta - Ana Costa',
       start: lastWeek,
       end: new Date(lastWeek.getTime() + 60 * 60 * 1000),
+      start_time: lastWeek.toISOString(),
+      end_time: new Date(lastWeek.getTime() + 60 * 60 * 1000).toISOString(),
       patient: {
         name: 'Ana Costa',
         email: 'ana@test.com'
@@ -67,6 +79,9 @@ export function createTestAppointments(): Appointment[] {
         name: 'Dr. João',
         email: 'joao@test.com'
       },
+      doctor_name: 'Dr. João',
+      doctor_email: 'joao@test.com',
+      patient_name: 'Ana Costa',
       status: 'completed',
       type: 'consultation'
     },
@@ -75,6 +90,8 @@ export function createTestAppointments(): Appointment[] {
       title: 'Consulta - Pedro Lima',
       start: todayPast,
       end: new Date(todayPast.getTime() + 60 * 60 * 1000),
+      start_time: todayPast.toISOString(),
+      end_time: new Date(todayPast.getTime() + 60 * 60 * 1000).toISOString(),
       patient: {
         name: 'Pedro Lima',
         email: 'pedro@test.com'
@@ -83,6 +100,9 @@ export function createTestAppointments(): Appointment[] {
         name: 'Dr. João',
         email: 'joao@test.com'
       },
+      doctor_name: 'Dr. João',
+      doctor_email: 'joao@test.com',
+      patient_name: 'Pedro Lima',
       status: 'scheduled',
       type: 'consultation'
     },
@@ -91,6 +111,8 @@ export function createTestAppointments(): Appointment[] {
       title: 'Consulta - Laura Oliveira',
       start: todayFuture,
       end: new Date(todayFuture.getTime() + 60 * 60 * 1000),
+      start_time: todayFuture.toISOString(),
+      end_time: new Date(todayFuture.getTime() + 60 * 60 * 1000).toISOString(),
       patient: {
         name: 'Laura Oliveira',
         email: 'laura@test.com'
@@ -99,6 +121,9 @@ export function createTestAppointments(): Appointment[] {
         name: 'Dr. João',
         email: 'joao@test.com'
       },
+      doctor_name: 'Dr. João',
+      doctor_email: 'joao@test.com',
+      patient_name: 'Laura Oliveira',
       status: 'scheduled',
       type: 'consultation'
     },
@@ -107,6 +132,8 @@ export function createTestAppointments(): Appointment[] {
       title: 'Consulta - Carlos Mendes',
       start: tomorrow,
       end: new Date(tomorrow.getTime() + 60 * 60 * 1000),
+      start_time: tomorrow.toISOString(),
+      end_time: new Date(tomorrow.getTime() + 60 * 60 * 1000).toISOString(),
       patient: {
         name: 'Carlos Mendes',
         email: 'carlos@test.com'
@@ -115,6 +142,9 @@ export function createTestAppointments(): Appointment[] {
         name: 'Dr. João',
         email: 'joao@test.com'
       },
+      doctor_name: 'Dr. João',
+      doctor_email: 'joao@test.com',
+      patient_name: 'Carlos Mendes',
       status: 'scheduled',
       type: 'consultation'
     }
