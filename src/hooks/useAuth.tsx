@@ -23,6 +23,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session:', {
+        hasSession: !!session,
+        provider: session?.app_metadata?.provider,
+        hasProviderToken: !!session?.provider_token,
+        userEmail: session?.user?.email
+      })
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
@@ -30,6 +36,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth state change:', {
+        event: _event,
+        hasSession: !!session,
+        provider: session?.app_metadata?.provider,
+        hasProviderToken: !!session?.provider_token,
+        userEmail: session?.user?.email
+      })
       setSession(session)
       setUser(session?.user ?? null)
     })
@@ -58,26 +71,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signInWithGoogle = async (options?: { switchAccount?: boolean }) => {
+    console.log('signInWithGoogle called with options:', options)
+    
     cleanupAuthState();
     try {
       await supabase.auth.signOut({ scope: 'global' });
     } catch (err) {
       console.warn('Pre-Google-signin global signout failed. This is expected if no user was logged in.', err);
     }
+
+    console.log('Attempting Google OAuth with Supabase...')
+    
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         scopes: 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events',
         queryParams: {
           access_type: 'offline',
-          prompt: options?.switchAccount ? 'consent select_account' : undefined,
+          prompt: options?.switchAccount ? 'consent select_account' : 'consent',
         },
+        redirectTo: `${window.location.origin}`,
       },
     })
+    
     if (error) {
       console.error('Error signing in with Google:', error)
       throw error
     }
+    
+    console.log('Google OAuth redirect initiated successfully')
   }
 
   return (

@@ -23,6 +23,13 @@ interface GoogleCalendarEvent {
 }
 
 async function googleApiRequest(url: string, accessToken: string, options: RequestInit = {}) {
+  console.log('Google API Request:', {
+    url,
+    method: options.method || 'GET',
+    hasToken: !!accessToken,
+    tokenPrefix: accessToken?.substring(0, 20) + '...'
+  })
+
   const response = await fetch(url, {
     ...options,
     headers: {
@@ -32,10 +39,31 @@ async function googleApiRequest(url: string, accessToken: string, options: Reque
     },
   })
 
+  console.log('Google API Response:', {
+    status: response.status,
+    statusText: response.statusText,
+    headers: Object.fromEntries(response.headers.entries())
+  })
+
   if (!response.ok) {
-    const errorData = await response.json()
-    console.error('Google API Error:', errorData)
-    const errorMessage = errorData.error?.message || `Request failed with status ${response.status}`
+    const errorText = await response.text()
+    let errorData
+    try {
+      errorData = JSON.parse(errorText)
+    } catch {
+      errorData = { message: errorText }
+    }
+    
+    console.error('Google API Error Details:', {
+      status: response.status,
+      statusText: response.statusText,
+      errorData,
+      url
+    })
+    
+    const errorMessage = errorData?.error?.message || 
+                        errorData?.message || 
+                        `Request failed with status ${response.status}: ${response.statusText}`
     throw new Error(errorMessage)
   }
 
@@ -43,7 +71,13 @@ async function googleApiRequest(url: string, accessToken: string, options: Reque
     return null
   }
 
-  return response.json()
+  const data = await response.json()
+  console.log('Google API Success Response:', {
+    itemsCount: data.items?.length || 0,
+    hasNextPageToken: !!data.nextPageToken
+  })
+
+  return data
 }
 
 export class GoogleCalendarService {
@@ -67,10 +101,9 @@ export class GoogleCalendarService {
       params.append('timeMax', timeMax)
     }
 
-    const data = await googleApiRequest(
-      `${GOOGLE_API_BASE_URL}/calendars/${CALENDAR_ID}/events?${params.toString()}`,
-      accessToken
-    )
+    const url = `${GOOGLE_API_BASE_URL}/calendars/${CALENDAR_ID}/events?${params.toString()}`
+    
+    const data = await googleApiRequest(url, accessToken)
 
     return data.items || []
   }
