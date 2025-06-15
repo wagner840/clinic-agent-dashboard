@@ -1,12 +1,12 @@
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useDoctorEarnings } from '@/hooks/useDoctorEarnings'
 import { DoctorEarningsTable } from './DoctorEarningsTable'
 import { ClinicTotalCard } from './ClinicTotalCard'
 import { ClinicChartsModal } from './ClinicChartsModal'
-import { HistoricalRecalculationButton } from './HistoricalRecalculationButton'
-import { Button } from '@/components/ui/button'
-import { RefreshCw, TrendingUp, AlertCircle } from 'lucide-react'
+import { EarningsPageHeader } from './EarningsPageHeader'
+import { EarningsDebugInfo } from './EarningsDebugInfo'
+import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/integrations/supabase/client'
 
@@ -80,52 +80,17 @@ export function EarningsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center space-x-2">
-            <TrendingUp className="h-8 w-8" />
-            <span>Relatório de Ganhos</span>
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Acompanhe os ganhos por médico e totais da clínica
-          </p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <HistoricalRecalculationButton />
-          <Button onClick={handleRefresh} disabled={loading} variant="outline">
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Atualizar
-          </Button>
-        </div>
-      </div>
+      <EarningsPageHeader loading={loading} onRefresh={handleRefresh} />
 
-      {/* Debug Info */}
-      {totalEarnings.length === 0 && !loading && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <div className="flex items-center space-x-2">
-            <AlertCircle className="h-5 w-5 text-yellow-600" />
-            <div>
-              <h3 className="font-medium text-yellow-800">Nenhum ganho encontrado</h3>
-              <p className="text-sm text-yellow-700 mt-1">
-                Se você tem agendamentos concluídos mas não vê ganhos aqui, use o botão "Recalcular Histórico" 
-                para processar pagamentos de agendamentos anteriores à implementação do sistema de relatórios.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      <EarningsDebugInfo totalEarnings={totalEarnings} loading={loading} />
 
-      {/* Totais da Clínica */}
       <ClinicTotalCard 
         totals={clinicTotals} 
         onShowCharts={() => setShowChartsModal(true)}
       />
 
-      {/* Tabela de Ganhos por Médico */}
       <DoctorEarningsTable earnings={totalEarnings} loading={loading} />
 
-      {/* Modal de Gráficos */}
       <ClinicChartsModal
         isOpen={showChartsModal}
         onClose={() => setShowChartsModal(false)}
