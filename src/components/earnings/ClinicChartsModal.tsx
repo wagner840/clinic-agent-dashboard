@@ -102,7 +102,7 @@ export function ClinicChartsModal({
           </TabsList>
 
           <TabsContent value={chartType} className="mt-6">
-            <Card>
+            <Card className="mx-0">
               <CardHeader>
                 <CardTitle className="text-lg">
                   {getChartTitle()}
