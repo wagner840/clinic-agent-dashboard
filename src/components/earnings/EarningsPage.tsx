@@ -1,8 +1,9 @@
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useDoctorEarnings } from '@/hooks/useDoctorEarnings'
 import { DoctorEarningsTable } from './DoctorEarningsTable'
 import { ClinicTotalCard } from './ClinicTotalCard'
+import { ClinicChartsModal } from './ClinicChartsModal'
 import { HistoricalRecalculationButton } from './HistoricalRecalculationButton'
 import { Button } from '@/components/ui/button'
 import { RefreshCw, TrendingUp, AlertCircle } from 'lucide-react'
@@ -11,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client'
 
 export function EarningsPage() {
   const { user } = useAuth()
+  const [showChartsModal, setShowChartsModal] = useState(false)
   const {
     totalEarnings,
     loading,
@@ -115,10 +117,20 @@ export function EarningsPage() {
       )}
 
       {/* Totais da Clínica */}
-      <ClinicTotalCard totals={clinicTotals} />
+      <ClinicTotalCard 
+        totals={clinicTotals} 
+        onShowCharts={() => setShowChartsModal(true)}
+      />
 
       {/* Tabela de Ganhos por Médico */}
       <DoctorEarningsTable earnings={totalEarnings} loading={loading} />
+
+      {/* Modal de Gráficos */}
+      <ClinicChartsModal
+        isOpen={showChartsModal}
+        onClose={() => setShowChartsModal(false)}
+        totalEarnings={totalEarnings}
+      />
     </div>
   )
 }

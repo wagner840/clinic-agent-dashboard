@@ -1,13 +1,16 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Building2, DollarSign, Users, CreditCard, Shield } from 'lucide-react'
+import { Building2, DollarSign, Users, CreditCard, Shield, BarChart3 } from 'lucide-react'
 import { ClinicTotals } from '@/types/earnings'
 
 interface ClinicTotalCardProps {
   totals: ClinicTotals
+  onShowCharts?: () => void
 }
 
-export function ClinicTotalCard({ totals }: ClinicTotalCardProps) {
+export function ClinicTotalCard({ totals, onShowCharts }: ClinicTotalCardProps) {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -26,10 +29,23 @@ export function ClinicTotalCard({ totals }: ClinicTotalCardProps) {
   return (
     <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
-          <Building2 className="h-6 w-6" />
-          <span>Total da Clínica</span>
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
+            <Building2 className="h-6 w-6" />
+            <span>Total da Clínica</span>
+          </CardTitle>
+          {onShowCharts && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={onShowCharts}
+              className="flex items-center space-x-2 bg-white/50 hover:bg-white/80 dark:bg-gray-800/50 dark:hover:bg-gray-800/80"
+            >
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">Gráficos</span>
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Valor Total */}
