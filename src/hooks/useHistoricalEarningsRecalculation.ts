@@ -10,6 +10,7 @@ interface PaymentWithAppointment {
   is_insurance: boolean
   appointment_id: string
   created_at: string
+  user_id: string
   appointments: {
     doctor_name: string
     doctor_email: string
