@@ -19,7 +19,7 @@ export function useGoogleCalendarReal() {
     hasSession: !!session,
     hasProviderToken: !!accessToken,
     providerTokenLength: accessToken?.length,
-    sessionProvider: session?.app_metadata?.provider,
+    sessionProvider: session?.user?.app_metadata?.provider,
     userMetadata: user?.user_metadata
   })
 

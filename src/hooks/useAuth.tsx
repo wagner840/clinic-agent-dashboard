@@ -25,7 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log('Initial session:', {
         hasSession: !!session,
-        provider: session?.app_metadata?.provider,
+        provider: session?.user?.app_metadata?.provider,
         hasProviderToken: !!session?.provider_token,
         userEmail: session?.user?.email
       })
@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('Auth state change:', {
         event: _event,
         hasSession: !!session,
-        provider: session?.app_metadata?.provider,
+        provider: session?.user?.app_metadata?.provider,
         hasProviderToken: !!session?.provider_token,
         userEmail: session?.user?.email
       })
