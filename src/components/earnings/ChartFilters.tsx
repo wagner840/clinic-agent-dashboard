@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -63,7 +62,7 @@ export function ChartFilters({ onFiltersChange }: ChartFiltersProps) {
   }
 
   return (
-    <Card className="mb-4 mx-2 sm:mx-0">
+    <Card className="mb-4">
       <CardHeader className="pb-2 px-3 sm:px-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <CardTitle className="text-sm flex items-center space-x-2">

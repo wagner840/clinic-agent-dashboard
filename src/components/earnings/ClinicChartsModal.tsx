@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -13,12 +14,14 @@ import { ChartRenderer } from './charts/ChartRenderer';
 import { ChartDataProcessor } from './charts/ChartDataProcessor';
 import { ChartLegend } from './charts/ChartLegend';
 import { SummaryCards } from './charts/SummaryCards';
+
 interface ClinicChartsModalProps {
   isOpen: boolean;
   onClose: () => void;
   totalEarnings: DoctorTotalEarnings[];
   appointments?: Appointment[];
 }
+
 export function ClinicChartsModal({
   isOpen,
   onClose,
@@ -57,86 +60,115 @@ export function ClinicChartsModal({
     const filterTitle = hasActiveFilters ? ' (Filtrado)' : '';
     return `${baseTitle}${viewTitle}${filterTitle}`;
   };
-  return <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle className="flex items-center space-x-2">
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-6xl w-[95vw] max-h-[90vh] flex flex-col p-0 sm:rounded-lg">
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 border-b">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <DialogTitle className="flex items-center space-x-2 text-base sm:text-lg">
                 <TrendingUp className="h-5 w-5" />
                 <span>Análise Gráfica - Dados da Clínica</span>
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="mt-2 text-xs sm:text-sm">
                 Visualize e compare os dados de faturamento e consultas
-                {hasActiveFilters && <span className="block text-blue-600 font-medium mt-1">
+                {hasActiveFilters && (
+                  <span className="block text-blue-600 font-medium mt-1">
                     Filtros ativos - {filteredEarnings.length} de {totalEarnings.length} médicos
-                  </span>}
+                  </span>
+                )}
               </DialogDescription>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose}>
+            <Button variant="ghost" size="icon" onClick={onClose} className="ml-4 -mt-2 -mr-2 sm:mt-0 sm:-mr-0">
               <X className="h-4 w-4" />
+              <span className="sr-only">Fechar</span>
             </Button>
           </div>
         </DialogHeader>
 
-        <ChartFilters onFiltersChange={setFilters} />
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+          <ChartFilters onFiltersChange={setFilters} />
 
-        <SummaryCards filteredEarnings={filteredEarnings} totalEarnings={totalEarnings} formatCurrency={formatCurrency} />
+          <SummaryCards filteredEarnings={filteredEarnings} totalEarnings={totalEarnings} formatCurrency={formatCurrency} />
 
-        <ChartControls viewMode={viewMode} selectedDoctor={selectedDoctor} dataType={dataType} comparisonMode={comparisonMode} availableDoctors={availableDoctors} onViewModeChange={setViewMode} onDoctorChange={setSelectedDoctor} onDataTypeChange={setDataType} onComparisonModeChange={setComparisonMode} />
+          <ChartControls
+            viewMode={viewMode}
+            selectedDoctor={selectedDoctor}
+            dataType={dataType}
+            comparisonMode={comparisonMode}
+            availableDoctors={availableDoctors}
+            onViewModeChange={setViewMode}
+            onDoctorChange={setSelectedDoctor}
+            onDataTypeChange={setDataType}
+            onComparisonModeChange={setComparisonMode}
+          />
 
-        <Tabs value={chartType} onValueChange={value => setChartType(value as 'bar' | 'line' | 'pie')}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="bar" className="flex items-center space-x-2">
-              <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Barras</span>
-            </TabsTrigger>
-            <TabsTrigger value="line" className="flex items-center space-x-2">
-              <TrendingUp className="h-4 w-4" />
-              <span className="hidden sm:inline">Linhas</span>
-            </TabsTrigger>
-            <TabsTrigger value="pie" className="flex items-center space-x-2">
-              <PieChartIcon className="h-4 w-4" />
-              <span className="hidden sm:inline">Pizza</span>
-            </TabsTrigger>
-          </TabsList>
+          <Tabs value={chartType} onValueChange={value => setChartType(value as 'bar' | 'line' | 'pie')}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="bar" className="flex items-center space-x-2 text-xs sm:text-sm">
+                <BarChart3 className="h-4 w-4" />
+                <span>Barras</span>
+              </TabsTrigger>
+              <TabsTrigger value="line" className="flex items-center space-x-2 text-xs sm:text-sm">
+                <TrendingUp className="h-4 w-4" />
+                <span>Linhas</span>
+              </TabsTrigger>
+              <TabsTrigger value="pie" className="flex items-center space-x-2 text-xs sm:text-sm">
+                <PieChartIcon className="h-4 w-4" />
+                <span>Pizza</span>
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value={chartType} className="mt-6">
-            <Card className="mx-0">
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  {getChartTitle()}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 my-[6px] mx-[240px]">
-                <ChartContainer config={{
-                total: {
-                  label: "Total",
-                  color: "hsl(var(--primary))"
-                },
-                private: {
-                  label: "Particular",
-                  color: "#10b981"
-                },
-                insurance: {
-                  label: "Convênio",
-                  color: "#3b82f6"
-                }
-              }}>
-                  <ChartRenderer chartType={chartType} chartData={chartData} pieData={pieData} dataType={dataType} comparisonMode={comparisonMode} formatCurrency={formatCurrency} />
-                </ChartContainer>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+            <TabsContent value={chartType} className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base sm:text-lg">
+                    {getChartTitle()}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pl-0 pr-2 sm:pl-2 sm:pr-4 pt-4">
+                  <ChartContainer
+                    config={{
+                      total: {
+                        label: 'Total',
+                        color: 'hsl(var(--primary))'
+                      },
+                      private: {
+                        label: 'Particular',
+                        color: '#10b981'
+                      },
+                      insurance: {
+                        label: 'Convênio',
+                        color: '#3b82f6'
+                      }
+                    }}
+                  >
+                    <ChartRenderer
+                      chartType={chartType}
+                      chartData={chartData}
+                      pieData={pieData}
+                      dataType={dataType}
+                      comparisonMode={comparisonMode}
+                      formatCurrency={formatCurrency}
+                    />
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
 
-        <ChartLegend comparisonMode={comparisonMode} chartType={chartType} />
+          <ChartLegend comparisonMode={comparisonMode} chartType={chartType} />
 
-        {filteredEarnings.length === 0 && <div className="text-center py-8">
-            <div className="text-muted-foreground">
-              Nenhum dado encontrado com os filtros aplicados.
+          {filteredEarnings.length === 0 && (
+            <div className="text-center py-8">
+              <div className="text-muted-foreground">
+                Nenhum dado encontrado com os filtros aplicados.
+              </div>
             </div>
-          </div>}
+          )}
+        </div>
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 }

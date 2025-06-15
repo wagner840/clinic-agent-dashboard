@@ -25,7 +25,7 @@ export function ChartControls({
   onComparisonModeChange
 }: ChartControlsProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
       <div className="flex flex-col space-y-2">
         <label className="text-sm font-medium">Visualização</label>
         <Select value={viewMode} onValueChange={onViewModeChange}>

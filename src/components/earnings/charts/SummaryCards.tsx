@@ -15,7 +15,7 @@ export function SummaryCards({ filteredEarnings, totalEarnings, formatCurrency }
   const isFiltered = filteredEarnings.length !== totalEarnings.length
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6 px-4 sm:px-0">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
       <Card className="min-h-[120px]">
         <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
           <CardTitle className="text-xs sm:text-sm text-muted-foreground">Faturamento Total</CardTitle>
