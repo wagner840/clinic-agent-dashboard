@@ -17,7 +17,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { Appointment } from '@/types/appointment'
 import { useToast } from "@/hooks/use-toast"
-import { DollarSign, Clock, User, CreditCard, Building } from 'lucide-react'
+import { DollarSign, Clock, User, CreditCard, Building, Calendar } from 'lucide-react'
 
 interface PaymentDialogProps {
   appointment: Appointment | null
@@ -47,6 +47,15 @@ export function PaymentDialog({ appointment, isOpen, onClose, onPaymentSuccess }
   }
 
   const formatDate = (date: Date) => {
+    return date.toLocaleDateString('pt-BR', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
+
+  const formatShortDate = (date: Date) => {
     return date.toLocaleDateString('pt-BR')
   }
 
@@ -105,22 +114,35 @@ export function PaymentDialog({ appointment, isOpen, onClose, onPaymentSuccess }
         </DialogHeader>
 
         {/* Informações da consulta */}
-        <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">Paciente:</span>
-            <div className="flex items-center space-x-2">
-              <User className="h-4 w-4 text-gray-500" />
-              <span className="text-sm font-semibold">{appointment.patient.name}</span>
+        <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+          <div className="flex items-start justify-between">
+            <div className="space-y-2 flex-1">
+              <div className="flex items-center space-x-2">
+                <User className="h-4 w-4 text-gray-500" />
+                <span className="text-sm font-semibold text-gray-900">
+                  {appointment.patient.name}
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Calendar className="h-4 w-4 text-gray-500" />
+                <span className="text-sm text-gray-700">
+                  {formatShortDate(appointment.start)}
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Clock className="h-4 w-4 text-gray-500" />
+                <span className="text-sm text-gray-700">
+                  {formatTime(appointment.start)} - {formatTime(appointment.end)}
+                </span>
+              </div>
             </div>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">Data/Hora:</span>
-            <div className="flex items-center space-x-2">
-              <Clock className="h-4 w-4 text-gray-500" />
-              <span className="text-sm">
-                {formatDate(appointment.start)} às {formatTime(appointment.start)}
-              </span>
-            </div>
+          
+          {/* Data completa para referência */}
+          <div className="pt-2 border-t border-gray-200">
+            <p className="text-xs text-gray-600 italic">
+              {formatDate(appointment.start)}
+            </p>
           </div>
         </div>
 
