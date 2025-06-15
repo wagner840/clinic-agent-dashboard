@@ -34,15 +34,32 @@ export function AddAppointmentModal({
     description: '',
     calendarId: ''
   });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
+      // Parse time correctly to avoid timezone issues
       const [hours, minutes] = formData.time.split(':').map(Number);
-      const startDate = new Date(formData.date);
+      
+      // Create date using the local date and time specified by user
+      const startDate = new Date(formData.date + 'T00:00:00');
       startDate.setHours(hours, minutes, 0, 0);
+      
+      // Calculate end date by adding duration
       const endDate = new Date(startDate);
       endDate.setMinutes(endDate.getMinutes() + parseInt(formData.duration));
+
+      console.log('📅 Creating appointment:', {
+        selectedDate: formData.date,
+        selectedTime: formData.time,
+        duration: formData.duration,
+        calculatedStart: startDate.toISOString(),
+        calculatedEnd: endDate.toISOString(),
+        localStart: startDate.toLocaleString(),
+        localEnd: endDate.toLocaleString()
+      });
+
       const appointmentData = {
         patientName: formData.patientName,
         patientEmail: formData.patientEmail,
@@ -52,6 +69,7 @@ export function AddAppointmentModal({
         type: formData.type,
         description: formData.description
       };
+
       await onAddAppointment(appointmentData, formData.calendarId);
 
       // Reset form
@@ -73,13 +91,16 @@ export function AddAppointmentModal({
       setLoading(false);
     }
   };
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
-  return <Dialog open={isOpen} onOpenChange={onClose}>
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -177,5 +198,6 @@ export function AddAppointmentModal({
           </div>
         </form>
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 }
