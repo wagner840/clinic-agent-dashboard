@@ -1,5 +1,7 @@
+
 import { useState } from 'react'
-import { useGoogleCalendarReal } from '@/hooks/useGoogleCalendarReal'
+import { useGoogleAuth } from '@/hooks/useGoogleAuth'
+import { useAppointments } from '@/hooks/useAppointments'
 import { DashboardStats } from '@/components/DashboardStats'
 import { DashboardHeader } from '@/components/DashboardHeader'
 import { GoogleAuthAlerts } from '@/components/GoogleAuthAlerts'
@@ -9,23 +11,37 @@ import { Appointment } from '@/types/appointment'
 
 export default function Dashboard() {
   const { 
-    appointments, 
-    loading, 
-    error, 
-    getTodayAppointments, 
-    getUpcomingAppointments,
-    getCancelledAppointments,
+    loading: authLoading, 
+    error: authError, 
     isGoogleInitialized,
     isGoogleSignedIn,
     googleSignIn,
     googleSignOut,
     googleSwitchAccount,
+    googleProfile,
+    accessToken,
+    clearError: clearAuthError
+  } = useGoogleAuth()
+
+  const {
+    appointments,
+    loading: appointmentsLoading,
+    error: appointmentsError,
     fetchAppointments,
-    clearError,
-    googleProfile
-  } = useGoogleCalendarReal()
+    getTodayAppointments,
+    getUpcomingAppointments,
+    getCancelledAppointments,
+    clearError: clearAppointmentsError
+  } = useAppointments(accessToken, isGoogleSignedIn)
 
   const [paymentAppointment, setPaymentAppointment] = useState<Appointment | null>(null)
+
+  const loading = authLoading || (isGoogleSignedIn && appointmentsLoading)
+  const error = authError || appointmentsError
+  const clearError = () => {
+    if (authError) clearAuthError()
+    if (appointmentsError) clearAppointmentsError()
+  }
 
   const todayAppointments = getTodayAppointments()
   const upcomingAppointments = getUpcomingAppointments()
@@ -36,13 +52,15 @@ export default function Dashboard() {
     imageUrl: googleProfile.getImageUrl()
   } : null
 
-  console.log('Google Calendar OAuth status (traditional):', {
+  console.log('Google Auth and Appointments status:', {
     isGoogleInitialized,
     isGoogleSignedIn,
-    appointmentsCount: appointments.length,
+    authLoading,
+    appointmentsLoading,
     loading,
     error,
-    currentUser: currentGoogleUser
+    currentUser: currentGoogleUser,
+    appointmentsCount: appointments.length
   })
 
   const handleGoogleAuth = async (): Promise<void> => {
@@ -60,6 +78,13 @@ export default function Dashboard() {
 
   const handleMarkAsCompleted = (appointment: Appointment) => {
     setPaymentAppointment(appointment)
+  }
+
+  const handleRetry = () => {
+    clearError()
+    if (appointmentsError) {
+        fetchAppointments()
+    }
   }
 
   return (
@@ -80,7 +105,7 @@ export default function Dashboard() {
           isGoogleSignedIn={isGoogleSignedIn}
           error={error}
           onGoogleSignIn={googleSignIn}
-          onRetry={fetchAppointments}
+          onRetry={handleRetry}
           onClearError={clearError}
           loading={loading}
           currentGoogleUser={currentGoogleUser}
@@ -98,7 +123,7 @@ export default function Dashboard() {
           cancelledAppointments={cancelledAppointments}
           isGoogleSignedIn={isGoogleSignedIn}
           isGoogleInitialized={isGoogleInitialized}
-          loading={loading}
+          loading={loading && isGoogleSignedIn}
           onGoogleSignIn={googleSignIn}
           onMarkAsCompleted={handleMarkAsCompleted}
         />
