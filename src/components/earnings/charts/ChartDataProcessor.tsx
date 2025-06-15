@@ -35,7 +35,7 @@ export class ChartDataProcessor {
     this.appointments
       .filter(apt => apt.status === 'completed')
       .forEach(apt => {
-        const doctorKey = apt.doctor_name
+        const doctorKey = apt.doctor_name || apt.doctor?.name
         if (!appointmentsByDoctor.has(doctorKey)) {
           appointmentsByDoctor.set(doctorKey, [])
         }
@@ -80,7 +80,7 @@ export class ChartDataProcessor {
         }
         
         filteredAppointments = filteredAppointments.filter(apt => {
-          const aptDate = new Date(apt.start_time)
+          const aptDate = new Date(apt.start_time || apt.start)
           return aptDate >= cutoffDate
         })
       }
@@ -94,7 +94,7 @@ export class ChartDataProcessor {
         const targetDay = dayMap[this.filters.dayOfWeek as keyof typeof dayMap]
         
         filteredAppointments = filteredAppointments.filter(apt => {
-          const aptDate = new Date(apt.start_time)
+          const aptDate = new Date(apt.start_time || apt.start)
           return aptDate.getDay() === targetDay
         })
       }
@@ -104,7 +104,7 @@ export class ChartDataProcessor {
         const targetMonth = parseInt(this.filters.month) - 1 // JavaScript months are 0-indexed
         
         filteredAppointments = filteredAppointments.filter(apt => {
-          const aptDate = new Date(apt.start_time)
+          const aptDate = new Date(apt.start_time || apt.start)
           return aptDate.getMonth() === targetMonth
         })
       }
@@ -114,15 +114,22 @@ export class ChartDataProcessor {
         const targetYear = parseInt(this.filters.year)
         
         filteredAppointments = filteredAppointments.filter(apt => {
-          const aptDate = new Date(apt.start_time)
+          const aptDate = new Date(apt.start_time || apt.start)
           return aptDate.getFullYear() === targetYear
         })
       }
 
       // Calcular novos totais baseados nos agendamentos filtrados
       const totalAppointments = filteredAppointments.length
-      const privateAppointments = filteredAppointments.filter(apt => apt.type === 'private').length
-      const insuranceAppointments = filteredAppointments.filter(apt => apt.type === 'insurance').length
+      // Check for appointment payment type - use description or custom field to determine if private/insurance
+      const privateAppointments = filteredAppointments.filter(apt => {
+        // Check if appointment type includes 'private' or check description for payment type
+        return apt.type === 'private' || (apt.description && apt.description.toLowerCase().includes('particular'))
+      }).length
+      const insuranceAppointments = filteredAppointments.filter(apt => {
+        // Check if appointment type includes 'insurance' or check description for payment type
+        return apt.type === 'insurance' || (apt.description && apt.description.toLowerCase().includes('convênio'))
+      }).length
 
       // Estimar valores baseados na proporção original
       const originalTotal = doctor.total_appointments || 1

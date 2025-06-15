@@ -4,6 +4,8 @@ export interface Appointment {
   title: string
   start: Date
   end: Date
+  start_time: string // Add start_time for database compatibility
+  end_time: string // Add end_time for database compatibility
   description?: string
   patient: {
     name: string
@@ -15,8 +17,11 @@ export interface Appointment {
     email: string
     calendarId?: string
   }
+  doctor_name: string // Add doctor_name for database compatibility
+  doctor_email: string // Add doctor_email for database compatibility
+  patient_name: string // Add patient_name for database compatibility
   status: 'scheduled' | 'completed' | 'cancelled'
-  type: 'consultation' | 'procedure' | 'follow-up'
+  type: 'consultation' | 'procedure' | 'follow-up' | 'private' | 'insurance' // Update type to include payment types
 }
 
 export interface CalendarEvent {
