@@ -1,5 +1,4 @@
 
-import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -9,15 +8,11 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
-import { Badge } from '@/components/ui/badge'
-import { supabase } from '@/integrations/supabase/client'
-import { useAuth } from '@/hooks/useAuth'
 import { Appointment } from '@/types/appointment'
-import { useToast } from "@/hooks/use-toast"
-import { DollarSign, Clock, User, CreditCard, Building, Calendar } from 'lucide-react'
+import { DollarSign } from 'lucide-react'
+import { PaymentFormFields } from '@/components/payment/PaymentFormFields'
+import { AppointmentInfo } from '@/components/payment/AppointmentInfo'
+import { usePaymentForm } from '@/hooks/usePaymentForm'
 
 interface PaymentDialogProps {
   appointment: Appointment | null
@@ -27,81 +22,36 @@ interface PaymentDialogProps {
 }
 
 export function PaymentDialog({ appointment, isOpen, onClose, onPaymentSuccess }: PaymentDialogProps) {
-  const { user } = useAuth()
-  const { toast } = useToast()
-  const [amount, setAmount] = useState('')
-  const [isInsurance, setIsInsurance] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const {
+    amount,
+    setAmount,
+    isInsurance,
+    setIsInsurance,
+    loading,
+    resetForm,
+    submitPayment,
+    isValidAmount
+  } = usePaymentForm()
 
-  const resetForm = () => {
-    setAmount('')
-    setIsInsurance(false)
+  const handleClose = () => {
+    resetForm()
     onClose()
-  }
-
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('pt-BR', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    })
-  }
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('pt-BR', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
-
-  const formatShortDate = (date: Date) => {
-    return date.toLocaleDateString('pt-BR')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!appointment || !user) return
+    if (!appointment) return
 
-    setLoading(true)
-
-    const paymentData = {
-      appointment_id: appointment.id,
-      amount: parseFloat(amount),
-      is_insurance: isInsurance,
-      user_id: user.id,
-    }
-
-    const { error } = await supabase.from('payments').insert(paymentData)
-
-    setLoading(false)
-
-    if (error) {
-      console.error('Error saving payment:', error)
-      toast({
-        title: 'Erro ao salvar pagamento',
-        description: error.message.includes('unique_payment_for_appointment') 
-          ? 'Já existe um pagamento para este agendamento.'
-          : error.message,
-        variant: 'destructive',
-      })
-    } else {
-      toast({
-        title: 'Pagamento registrado com sucesso!',
-        description: `Consulta de ${appointment.patient.name} finalizada.`,
-        duration: 5000,
-      })
+    await submitPayment(appointment, () => {
       onPaymentSuccess()
-      resetForm()
-    }
+      handleClose()
+    })
   }
 
   if (!appointment) return null
 
-  const isValidAmount = amount && parseFloat(amount) > 0
-
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && resetForm()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="space-y-3">
           <DialogTitle className="flex items-center space-x-2">
@@ -113,91 +63,21 @@ export function PaymentDialog({ appointment, isOpen, onClose, onPaymentSuccess }
           </DialogDescription>
         </DialogHeader>
 
-        {/* Informações da consulta */}
-        <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-          <div className="flex items-start justify-between">
-            <div className="space-y-2 flex-1">
-              <div className="flex items-center space-x-2">
-                <User className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-semibold text-gray-900">
-                  {appointment.patient.name}
-                </span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Calendar className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-700">
-                  {formatShortDate(appointment.start)}
-                </span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Clock className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-700">
-                  {formatTime(appointment.start)} - {formatTime(appointment.end)}
-                </span>
-              </div>
-            </div>
-          </div>
-          
-          {/* Data completa para referência */}
-          <div className="pt-2 border-t border-gray-200">
-            <p className="text-xs text-gray-600 italic">
-              {formatDate(appointment.start)}
-            </p>
-          </div>
-        </div>
+        <AppointmentInfo appointment={appointment} />
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="amount" className="text-sm font-medium">
-                Valor do Pagamento (R$) *
-              </Label>
-              <div className="relative">
-                <Input
-                  id="amount"
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  required
-                  step="0.01"
-                  min="0"
-                  placeholder="0,00"
-                  className="pl-8"
-                />
-                <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="flex items-center space-x-2">
-                {isInsurance ? (
-                  <Building className="h-4 w-4 text-blue-600" />
-                ) : (
-                  <CreditCard className="h-4 w-4 text-blue-600" />
-                )}
-                <Label htmlFor="is-insurance" className="text-sm font-medium text-blue-800">
-                  {isInsurance ? 'Pagamento via convênio' : 'Pagamento particular'}
-                </Label>
-              </div>
-              <Switch
-                id="is-insurance"
-                checked={isInsurance}
-                onCheckedChange={setIsInsurance}
-              />
-            </div>
-
-            {isInsurance && (
-              <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded border-l-2 border-blue-400">
-                💡 Lembre-se de verificar a cobertura do convênio
-              </div>
-            )}
-          </div>
+          <PaymentFormFields
+            amount={amount}
+            setAmount={setAmount}
+            isInsurance={isInsurance}
+            setIsInsurance={setIsInsurance}
+          />
 
           <DialogFooter className="space-x-2">
             <Button 
               type="button" 
               variant="outline" 
-              onClick={resetForm} 
+              onClick={handleClose} 
               disabled={loading}
               className="flex-1"
             >
