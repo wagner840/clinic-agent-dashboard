@@ -19,7 +19,7 @@ export function useAppointmentFilters(appointments: Appointment[]) {
     const filtered = appointments.filter(apt => {
       const aptDate = new Date(apt.start)
       const isToday = aptDate.toDateString() === today.toDateString()
-      const notCancelled = apt.status !== 'cancelled'
+      const isScheduled = apt.status === 'scheduled'
       
       console.log('📅 Today filter check:', {
         appointment: apt.patient.name,
@@ -27,11 +27,11 @@ export function useAppointmentFilters(appointments: Appointment[]) {
         today: today.toDateString(),
         isToday,
         status: apt.status,
-        notCancelled,
-        included: isToday && notCancelled
+        isScheduled,
+        included: isToday && isScheduled
       })
       
-      return isToday && notCancelled
+      return isToday && isScheduled
     })
     
     console.log('📅 Today appointments result:', filtered.length)
@@ -46,7 +46,7 @@ export function useAppointmentFilters(appointments: Appointment[]) {
     const filtered = appointments.filter(apt => {
       const aptDate = new Date(apt.start)
       const isFuture = aptDate >= tomorrow
-      const notCancelled = apt.status !== 'cancelled'
+      const isScheduled = apt.status === 'scheduled'
       
       console.log('🔮 Upcoming filter check:', {
         appointment: apt.patient.name,
@@ -55,11 +55,11 @@ export function useAppointmentFilters(appointments: Appointment[]) {
         aptDate: aptDate.toDateString(),
         isFuture,
         status: apt.status,
-        notCancelled,
-        included: isFuture && notCancelled
+        isScheduled,
+        included: isFuture && isScheduled
       })
       
-      return isFuture && notCancelled
+      return isFuture && isScheduled
     })
       .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
     
