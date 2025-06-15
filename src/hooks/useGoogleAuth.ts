@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react'
 import { gapi } from 'gapi-script'
 import { supabase } from '@/integrations/supabase/client'
@@ -91,24 +92,23 @@ export function useGoogleAuth() {
     const fetchGoogleClientId = async () => {
       setLoading(true)
       setError(null)
-      console.log('Buscando Google Client ID da função do Supabase...')
+      console.log('🔍 Buscando Google Client ID da função do Supabase...')
+      
       const { data, error: invokeError } = await supabase.functions.invoke('get-google-client-id')
       
       if (invokeError) {
-        console.error('Erro ao buscar Google Client ID:', invokeError.message)
+        console.error('❌ Erro ao buscar Google Client ID:', invokeError.message)
         setError('Falha ao buscar a configuração do Google (Client ID). Verifique se a função "get-google-client-id" está implantada corretamente no Supabase.')
-        setIsGoogleInitialized(true)
         setLoading(false)
         return
       }
 
       if (data && data.clientId) {
-        console.log('Google Client ID buscado com sucesso.')
+        console.log('✅ Google Client ID buscado com sucesso:', data.clientId.substring(0, 20) + '...')
         setGoogleClientId(data.clientId)
       } else {
-        console.error('Google Client ID não retornado pela função:', data)
-        setError('A configuração do Google está incompleta. O Client ID está ausente nos segredos do Supabase. Por favor, adicione um segredo chamado "client_id".')
-        setIsGoogleInitialized(true)
+        console.error('❌ Google Client ID não retornado pela função:', data)
+        setError('A configuração do Google está incompleta. O Client ID está ausente nos segredos do Supabase.')
         setLoading(false)
       }
     }
@@ -118,135 +118,175 @@ export function useGoogleAuth() {
 
   useEffect(() => {
     if (!googleClientId) {
-      console.log('Aguardando Google Client ID para inicializar o GAPI...')
+      console.log('⏳ Aguardando Google Client ID para inicializar o GAPI...')
       return
     }
 
-    // Carrega estado salvo antes de inicializar
-    const savedState = loadSavedAuthState()
+    console.log('🚀 Iniciando inicialização do Google GAPI com Client ID...')
 
-    const initClient = () => {
-      window.gapi.client.init({
-        clientId: googleClientId,
-        scope: GOOGLE_CALENDAR_SCOPES,
-        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest']
-      }).then(() => {
+    const initClient = async () => {
+      try {
+        console.log('📦 Carregando GAPI client...')
+        
+        await new Promise<void>((resolve, reject) => {
+          if (window.gapi && window.gapi.client) {
+            console.log('✅ GAPI já está carregado')
+            resolve()
+          } else {
+            gapi.load('client:auth2', {
+              callback: () => {
+                console.log('✅ GAPI carregado com sucesso')
+                resolve()
+              },
+              onerror: () => {
+                console.error('❌ Erro ao carregar GAPI')
+                reject(new Error('Falha ao carregar GAPI'))
+              }
+            })
+          }
+        })
+
+        console.log('⚙️ Inicializando Google Client...')
+        await window.gapi.client.init({
+          clientId: googleClientId,
+          scope: GOOGLE_CALENDAR_SCOPES,
+          discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest']
+        })
+
+        console.log('🔐 Obtendo instância de autenticação...')
         const authInstance = window.gapi.auth2.getAuthInstance()
+        if (!authInstance) {
+          throw new Error('Falha ao obter instância de autenticação')
+        }
+
         setGoogleAuth(authInstance)
         setIsGoogleInitialized(true)
-        setLoading(false)
-        
+        console.log('✅ Google Auth inicializado com sucesso!')
+
+        // Função para atualizar status de login
         const updateSigninStatus = (signedIn: boolean) => {
+          console.log('🔄 Atualizando status de login:', signedIn)
           setIsGoogleSignedIn(signedIn)
+          
           if (signedIn) {
             const currentGoogleUser = authInstance.currentUser.get()
             const authResponse = currentGoogleUser.getAuthResponse(true)
             const profile = currentGoogleUser.getBasicProfile()
             
+            console.log('👤 Usuário Google logado:', profile.getEmail())
             setAccessToken(authResponse.access_token)
             setGoogleProfile(profile)
-            
-            // Salva o estado atual
             saveAuthState(true, authResponse.access_token, profile)
-            
-            console.log('✅ Usuário Google conectado e estado salvo.')
           } else {
+            console.log('👤 Usuário Google deslogado')
             setAccessToken(null)
             setGoogleProfile(null)
-            
-            // Limpa estado salvo
             clearSavedAuthState()
-            
-            console.log('❌ Usuário Google desconectado e estado limpo.')
           }
         }
-        
-        // Se temos estado salvo e o Google diz que está logado, restaura
-        if (savedState && authInstance.isSignedIn.get()) {
-          console.log('🔄 Restaurando sessão do Google...')
-          updateSigninStatus(true)
-        }
-        
-        authInstance.isSignedIn.listen(updateSigninStatus)
-        updateSigninStatus(authInstance.isSignedIn.get())
 
-      }).catch(err => {
-        console.error("Erro ao inicializar o Google Client", err)
-        setError("Falha ao inicializar a integração com o Google. Verifique se o Client ID é válido e a configuração no Google Cloud está correta.")
-        setIsGoogleInitialized(true)
+        // Configurar listener para mudanças de status
+        authInstance.isSignedIn.listen(updateSigninStatus)
+        
+        // Verificar status atual
+        const currentlySignedIn = authInstance.isSignedIn.get()
+        console.log('📊 Status atual de login:', currentlySignedIn)
+        
+        // Se há estado salvo e o Google confirma que está logado, use o status do Google
+        const savedState = loadSavedAuthState()
+        if (savedState && currentlySignedIn) {
+          console.log('🔄 Restaurando sessão do Google a partir do estado salvo')
+          updateSigninStatus(true)
+        } else {
+          updateSigninStatus(currentlySignedIn)
+        }
+
         setLoading(false)
-      })
+
+      } catch (err: any) {
+        console.error("❌ Erro ao inicializar o Google Client:", err)
+        setError(`Falha ao inicializar a integração com o Google: ${err.message}`)
+        setLoading(false)
+      }
     }
     
-    gapi.load('client:auth2', initClient)
+    initClient()
   }, [googleClientId, loadSavedAuthState, saveAuthState, clearSavedAuthState])
 
   const googleSignIn = useCallback(async () => {
-    if (googleAuth) {
-      try {
-        // Força a seleção de conta e solicita novos tokens
-        const user = await googleAuth.signIn({
-          prompt: 'select_account'
-        })
-        
-        // Salva imediatamente após o login bem-sucedido
-        const authResponse = user.getAuthResponse(true)
-        const profile = user.getBasicProfile()
-        saveAuthState(true, authResponse.access_token, profile)
-        
-        setError(null)
-        console.log('✅ Login realizado e estado persistido.')
-      } catch (err: any) {
-        console.error("Erro ao fazer login com Google:", err)
-        if (err.error === 'popup_closed_by_user') {
-          setError("A janela de login do Google foi fechada antes da conclusão.")
-        } else {
-          setError("Ocorreu um erro ao tentar fazer login com o Google.")
-        }
+    if (!googleAuth) {
+      console.error('❌ Google Auth não inicializado')
+      setError('Google Auth não está inicializado. Aguarde a inicialização.')
+      return
+    }
+
+    try {
+      console.log('🔐 Iniciando processo de login...')
+      const user = await googleAuth.signIn({
+        prompt: 'select_account'
+      })
+      
+      const authResponse = user.getAuthResponse(true)
+      const profile = user.getBasicProfile()
+      console.log('✅ Login realizado com sucesso para:', profile.getEmail())
+      
+      saveAuthState(true, authResponse.access_token, profile)
+      setError(null)
+    } catch (err: any) {
+      console.error("❌ Erro ao fazer login com Google:", err)
+      if (err.error === 'popup_closed_by_user') {
+        setError("A janela de login do Google foi fechada antes da conclusão.")
+      } else {
+        setError(`Erro ao tentar fazer login com o Google: ${err.error || err.message}`)
       }
     }
   }, [googleAuth, saveAuthState])
 
   const googleSignOut = useCallback(async () => {
-    if (googleAuth) {
-      try {
-        await googleAuth.signOut()
-        clearSavedAuthState()
-        setError(null)
-        console.log('✅ Logout realizado e estado limpo.')
-      } catch (err) {
-        console.error("Erro ao fazer logout do Google:", err)
-        setError("Ocorreu um erro ao fazer logout do Google.")
-      }
+    if (!googleAuth) {
+      console.error('❌ Google Auth não inicializado')
+      return
+    }
+
+    try {
+      console.log('🚪 Fazendo logout...')
+      await googleAuth.signOut()
+      clearSavedAuthState()
+      setError(null)
+      console.log('✅ Logout realizado com sucesso')
+    } catch (err: any) {
+      console.error("❌ Erro ao fazer logout do Google:", err)
+      setError(`Erro ao fazer logout do Google: ${err.message}`)
     }
   }, [googleAuth, clearSavedAuthState])
 
   const googleSwitchAccount = useCallback(async () => {
-    if (googleAuth) {
-      try {
-        // Primeiro faz logout e limpa estado
-        await googleAuth.signOut()
-        clearSavedAuthState()
-        
-        // Depois faz login com prompt de seleção de conta
-        const user = await googleAuth.signIn({
-          prompt: 'select_account'
-        })
-        
-        // Salva o novo estado
-        const authResponse = user.getAuthResponse(true)
-        const profile = user.getBasicProfile()
-        saveAuthState(true, authResponse.access_token, profile)
-        
-        setError(null)
-        console.log('✅ Troca de conta realizada e estado atualizado.')
-      } catch (err: any) {
-        console.error("Erro ao trocar conta do Google:", err)
-        if (err.error === 'popup_closed_by_user') {
-          setError("A janela de login do Google foi fechada antes da conclusão.")
-        } else {
-          setError("Ocorreu um erro ao tentar trocar a conta do Google.")
-        }
+    if (!googleAuth) {
+      console.error('❌ Google Auth não inicializado')
+      return
+    }
+
+    try {
+      console.log('🔄 Trocando conta...')
+      await googleAuth.signOut()
+      clearSavedAuthState()
+      
+      const user = await googleAuth.signIn({
+        prompt: 'select_account'
+      })
+      
+      const authResponse = user.getAuthResponse(true)
+      const profile = user.getBasicProfile()
+      console.log('✅ Troca de conta realizada para:', profile.getEmail())
+      
+      saveAuthState(true, authResponse.access_token, profile)
+      setError(null)
+    } catch (err: any) {
+      console.error("❌ Erro ao trocar conta do Google:", err)
+      if (err.error === 'popup_closed_by_user') {
+        setError("A janela de login do Google foi fechada antes da conclusão.")
+      } else {
+        setError(`Erro ao trocar conta do Google: ${err.error || err.message}`)
       }
     }
   }, [googleAuth, saveAuthState, clearSavedAuthState])
