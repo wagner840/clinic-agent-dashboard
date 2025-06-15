@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react'
 import { gapi } from 'gapi-script'
 import { Appointment } from '@/types/appointment'
@@ -5,6 +6,8 @@ import { GoogleCalendarService } from '@/services/googleCalendar'
 import { useAuth } from './useAuth'
 import { GOOGLE_CALENDAR_SCOPES } from '@/lib/google'
 import { supabase } from '@/integrations/supabase/client'
+
+const TARGET_CALENDAR_NAMES = ['doutora anne', 'doutor iago']
 
 export function useGoogleCalendarReal() {
   const { user, loading: authLoading } = useAuth()
@@ -28,25 +31,46 @@ export function useGoogleCalendarReal() {
       return
     }
 
-    console.log('Iniciando busca de agendamentos com nova auth...')
+    console.log('Iniciando busca de agendamentos...')
     setLoading(true)
     setError(null)
     
     try {
-      const events = await calendarService.fetchEvents(token)
-      const convertedAppointments = events.map(event => 
-        calendarService.convertToAppointment(event, user?.email || '')
+      const allCalendars = await calendarService.fetchCalendarList(token)
+      
+      const targetCalendars = allCalendars.filter(cal => 
+        TARGET_CALENDAR_NAMES.includes(cal.summary.toLowerCase())
+      )
+
+      if (targetCalendars.length === 0) {
+        setError(`Nenhum dos calendários alvo (${TARGET_CALENDAR_NAMES.join(', ')}) foi encontrado na sua conta Google. Verifique os nomes e permissões.`)
+        setAppointments([])
+        setLoading(false)
+        return
+      }
+
+      console.log(`Buscando eventos para os calendários: ${targetCalendars.map(c => c.summary).join(', ')}`)
+
+      const eventPromises = targetCalendars.map(cal => 
+        calendarService.fetchEvents(token, cal.id)
       )
       
+      const eventsPerCalendar = await Promise.all(eventPromises)
+      const allEvents = eventsPerCalendar.flat()
+      
+      const convertedAppointments = allEvents
+        .map(event => calendarService.convertToAppointment(event, user?.email || ''))
+        .sort((a, b) => a.start.getTime() - b.start.getTime())
+      
       setAppointments(convertedAppointments)
-      console.log(`Carregados ${convertedAppointments.length} agendamentos do Google Calendar`)
+      console.log(`Carregados ${convertedAppointments.length} agendamentos de ${targetCalendars.length} calendários.`)
     } catch (err: any) {
       console.error('Erro detalhado ao buscar eventos:', err)
       const errorMessage = err.message || 'Erro ao carregar agendamentos'
       if (err.message.includes('401') || err.message.includes('Invalid Credentials')) {
         setError('Sessão do Google expirada. Por favor, conecte novamente.')
       } else if (err.message.includes('403')) {
-        setError('Acesso negado ao Google Calendar. Verifique as permissões.')
+        setError('Acesso negado ao Google Calendar. Verifique as permissões para todos os calendários alvo.')
       } else {
         setError(errorMessage)
       }

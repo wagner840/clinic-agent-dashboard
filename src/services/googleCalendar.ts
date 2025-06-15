@@ -1,24 +1,11 @@
 import { CalendarEvent, Appointment } from '@/types/appointment'
 
-const CALENDAR_ID = 'primary'
 const GOOGLE_API_BASE_URL = 'https://www.googleapis.com/calendar/v3'
 
-interface GoogleCalendarEvent {
+export interface CalendarListEntry {
   id: string
   summary: string
-  description?: string
-  start: {
-    dateTime: string
-    timeZone?: string
-  }
-  end: {
-    dateTime: string
-    timeZone?: string
-  }
-  attendees?: Array<{
-    email: string
-    displayName?: string
-  }>
+  primary?: boolean
 }
 
 async function googleApiRequest(url: string, accessToken: string, options: RequestInit = {}) {
@@ -72,7 +59,8 @@ async function googleApiRequest(url: string, accessToken: string, options: Reque
 
   const data = await response.json()
   console.log('Google API Success Response:', {
-    itemsCount: data.items?.length || 0,
+    requestUrl: url,
+    itemsCount: data.items?.length,
     hasNextPageToken: !!data.nextPageToken
   })
 
@@ -86,7 +74,17 @@ export class GoogleCalendarService {
     }
   }
 
-  async fetchEvents(accessToken: string | null, timeMin?: string, timeMax?: string): Promise<CalendarEvent[]> {
+  async fetchCalendarList(accessToken: string | null): Promise<CalendarListEntry[]> {
+    this.checkToken(accessToken)
+    const url = `${GOOGLE_API_BASE_URL}/users/me/calendarList`
+    console.log('Fetching calendar list...')
+    const data = await googleApiRequest(url, accessToken)
+    const calendars = data.items || []
+    console.log(`Found ${calendars.length} calendars:`, calendars.map((c: any) => c.summary))
+    return calendars
+  }
+
+  async fetchEvents(accessToken: string | null, calendarId: string, timeMin?: string, timeMax?: string): Promise<CalendarEvent[]> {
     this.checkToken(accessToken)
     
     const params = new URLSearchParams({
@@ -94,24 +92,25 @@ export class GoogleCalendarService {
       showDeleted: 'true',
       singleEvents: 'true',
       orderBy: 'startTime',
-      maxResults: '50',
+      maxResults: '250',
     })
     if (timeMax) {
       params.append('timeMax', timeMax)
     }
 
-    const url = `${GOOGLE_API_BASE_URL}/calendars/${CALENDAR_ID}/events?${params.toString()}`
+    const url = `${GOOGLE_API_BASE_URL}/calendars/${encodeURIComponent(calendarId)}/events?${params.toString()}`
     
+    console.log(`Fetching events for calendar: ${calendarId}`)
     const data = await googleApiRequest(url, accessToken)
 
     return data.items || []
   }
 
-  async createEvent(accessToken: string | null, event: CalendarEvent): Promise<string> {
+  async createEvent(accessToken: string | null, calendarId: string, event: CalendarEvent): Promise<string> {
     this.checkToken(accessToken)
     
     const data = await googleApiRequest(
-      `${GOOGLE_API_BASE_URL}/calendars/${CALENDAR_ID}/events`,
+      `${GOOGLE_API_BASE_URL}/calendars/${encodeURIComponent(calendarId)}/events`,
       accessToken,
       {
         method: 'POST',
@@ -122,11 +121,11 @@ export class GoogleCalendarService {
     return data.id
   }
 
-  async updateEvent(accessToken: string | null, eventId: string, event: Partial<CalendarEvent>): Promise<void> {
+  async updateEvent(accessToken: string | null, calendarId: string, eventId: string, event: Partial<CalendarEvent>): Promise<void> {
     this.checkToken(accessToken)
     
     await googleApiRequest(
-      `${GOOGLE_API_BASE_URL}/calendars/${CALENDAR_ID}/events/${eventId}`,
+      `${GOOGLE_API_BASE_URL}/calendars/${encodeURIComponent(calendarId)}/events/${eventId}`,
       accessToken,
       {
         method: 'PATCH',
@@ -135,11 +134,11 @@ export class GoogleCalendarService {
     )
   }
 
-  async deleteEvent(accessToken: string | null, eventId: string): Promise<void> {
+  async deleteEvent(accessToken: string | null, calendarId: string, eventId: string): Promise<void> {
     this.checkToken(accessToken)
     
     await googleApiRequest(
-      `${GOOGLE_API_BASE_URL}/calendars/${CALENDAR_ID}/events/${eventId}`,
+      `${GOOGLE_API_BASE_URL}/calendars/${encodeURIComponent(calendarId)}/events/${eventId}`,
       accessToken,
       {
         method: 'DELETE',
