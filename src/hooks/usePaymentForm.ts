@@ -20,6 +20,14 @@ export function usePaymentForm() {
   const submitPayment = async (appointment: Appointment, onSuccess: () => void) => {
     if (!appointment || !user) return
 
+    console.log('💰 Submitting payment for appointment:', {
+      appointmentId: appointment.id,
+      patientName: appointment.patient.name,
+      amount: parseFloat(amount),
+      isInsurance,
+      userId: user.id
+    })
+
     setLoading(true)
 
     const paymentData = {
@@ -34,7 +42,7 @@ export function usePaymentForm() {
     setLoading(false)
 
     if (error) {
-      console.error('Error saving payment:', error)
+      console.error('❌ Error saving payment:', error)
       toast({
         title: 'Erro ao salvar pagamento',
         description: error.message.includes('unique_payment_for_appointment') 
@@ -43,6 +51,7 @@ export function usePaymentForm() {
         variant: 'destructive',
       })
     } else {
+      console.log('✅ Payment saved successfully for appointment:', appointment.id)
       toast({
         title: 'Pagamento registrado com sucesso!',
         description: `Consulta de ${appointment.patient.name} finalizada.`,

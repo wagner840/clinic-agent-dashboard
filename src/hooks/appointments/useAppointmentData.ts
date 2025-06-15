@@ -4,8 +4,12 @@ import { Appointment } from '@/types/appointment'
 import { GoogleCalendarService } from '@/services/googleCalendar'
 import { supabase } from '@/integrations/supabase/client'
 import { TARGET_CALENDAR_IDS } from '@/constants/appointments'
+import { createTestAppointments, logTestAppointmentDetails } from '@/utils/testAppointments'
 
 const calendarService = new GoogleCalendarService()
+
+// Set to true to use test data instead of Google Calendar
+const USE_TEST_DATA = false
 
 export function useAppointmentData(
   accessToken: string | null, 
@@ -28,6 +32,15 @@ export function useAppointmentData(
     console.log('Iniciando busca de agendamentos...')
     setLoading(true)
     setError(null)
+
+    // Use test data if enabled
+    if (USE_TEST_DATA) {
+      console.log('🧪 Using test appointment data')
+      const testAppointments = logTestAppointmentDetails()
+      setAppointments(testAppointments)
+      setLoading(false)
+      return
+    }
     
     try {
       const allCalendars = await calendarService.fetchCalendarList(accessToken)
@@ -52,10 +65,35 @@ export function useAppointmentData(
       const eventsPerCalendar = await Promise.all(eventPromises)
       const allEvents = eventsPerCalendar.flat()
       
+      console.log('🎯 Raw events from Google Calendar:', {
+        totalEvents: allEvents.length,
+        eventSample: allEvents.slice(0, 3).map(event => ({
+          id: event.id,
+          summary: event.summary,
+          start: event.start,
+          status: event.status
+        }))
+      })
+      
       const convertedAppointments = allEvents
         .map(event => calendarService.convertToAppointment(event, user?.email || ''))
         .sort((a, b) => a.start.getTime() - b.start.getTime())
       
+      console.log('🔄 Converted appointments before payment processing:', {
+        totalConverted: convertedAppointments.length,
+        statusBreakdown: convertedAppointments.reduce((acc, apt) => {
+          acc[apt.status] = (acc[apt.status] || 0) + 1
+          return acc
+        }, {} as Record<string, number>),
+        sampleAppointments: convertedAppointments.slice(0, 3).map(apt => ({
+          id: apt.id,
+          title: apt.title,
+          start: apt.start,
+          status: apt.status,
+          patient: apt.patient.name
+        }))
+      })
+
       const { data: payments, error: paymentsError } = await supabase
         .from('payments')
         .select('appointment_id')
@@ -65,14 +103,35 @@ export function useAppointmentData(
       }
 
       const paidAppointmentIds = new Set(payments?.map(p => p.appointment_id) || [])
+      console.log('💰 Payment data:', {
+        totalPayments: payments?.length || 0,
+        paidAppointmentIds: Array.from(paidAppointmentIds)
+      })
+
       const updatedAppointments = convertedAppointments.map(apt => {
         if (apt.status === 'cancelled') {
           return apt
         }
         if (paidAppointmentIds.has(apt.id)) {
+          console.log(`✅ Marking appointment ${apt.id} (${apt.patient.name}) as completed due to payment`)
           return { ...apt, status: 'completed' as const }
         }
         return apt
+      })
+
+      console.log('📋 Final appointments after payment processing:', {
+        totalFinal: updatedAppointments.length,
+        statusBreakdown: updatedAppointments.reduce((acc, apt) => {
+          acc[apt.status] = (acc[apt.status] || 0) + 1
+          return acc
+        }, {} as Record<string, number>),
+        appointmentDetails: updatedAppointments.map(apt => ({
+          id: apt.id,
+          title: apt.title,
+          start: apt.start,
+          status: apt.status,
+          patient: apt.patient.name
+        }))
       })
 
       setAppointments(updatedAppointments)
