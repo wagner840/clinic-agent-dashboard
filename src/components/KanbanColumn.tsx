@@ -57,7 +57,7 @@ export function KanbanColumn({
               {...provided.droppableProps}
               className={`
                 space-y-3 min-h-[200px] p-2 rounded-lg transition-colors
-                ${snapshot.isDraggingOver ? 'bg-blue-50 border-2 border-dashed border-blue-300' : ''}
+                ${snapshot.isDraggingOver ? 'bg-blue-50 dark:bg-accent/40 border-2 border-dashed border-blue-300 dark:border-blue-700' : ''}
               `}
             >
               {appointments.length === 0 ? (
