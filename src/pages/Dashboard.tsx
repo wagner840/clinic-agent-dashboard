@@ -80,10 +80,10 @@ export default function Dashboard() {
     setPaymentAppointment(appointment)
   }
 
-  const handleRetry = () => {
+  const handleRetry = async () => {
     clearError()
     if (appointmentsError) {
-        fetchAppointments()
+        await fetchAppointments()
     }
   }
 
