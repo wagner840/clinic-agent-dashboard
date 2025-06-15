@@ -1,3 +1,4 @@
+
 import { DashboardStats } from '@/components/DashboardStats'
 import { DashboardHeader } from '@/components/DashboardHeader'
 import { GoogleAuthAlerts } from '@/components/GoogleAuthAlerts'
@@ -10,6 +11,7 @@ import { CalendarListEntry } from '@/services/googleCalendar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { SettingsSheet } from './SettingsSheet'
+import { useMemo } from 'react'
 
 interface DashboardContentProps {
   isGoogleInitialized: boolean
@@ -88,6 +90,14 @@ export function DashboardContent({
   isSettingsOpen,
   onSettingsChange
 }: DashboardContentProps) {
+  // Filtrar calendários para remover "Holidays in Brazil" do seletor de médicos
+  const doctorCalendarsForFilter = useMemo(() => {
+    return doctorCalendars.filter(cal => 
+      !cal.summary?.toLowerCase().includes('holiday') && 
+      !cal.summary?.toLowerCase().includes('feriado')
+    )
+  }, [doctorCalendars])
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <DashboardHeader
@@ -114,7 +124,7 @@ export function DashboardContent({
         />
 
         <div className="space-y-6 sm:space-y-8">
-          {isGoogleSignedIn && doctorCalendars.length > 0 && (
+          {isGoogleSignedIn && doctorCalendarsForFilter.length > 0 && (
             <div className="flex justify-start">
               <div className="space-y-2">
                 <Label htmlFor="doctor-filter">Filtrar por Médico</Label>
@@ -124,7 +134,7 @@ export function DashboardContent({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os Médicos</SelectItem>
-                    {doctorCalendars.map((cal) => (
+                    {doctorCalendarsForFilter.map((cal) => (
                       <SelectItem key={cal.id} value={cal.id}>
                         {cal.summary}
                       </SelectItem>

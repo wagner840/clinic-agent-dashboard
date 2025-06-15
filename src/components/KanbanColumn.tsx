@@ -5,6 +5,7 @@ import { AppointmentCard } from '@/components/AppointmentCard'
 import { Appointment } from '@/types/appointment'
 import { Droppable, Draggable } from 'react-beautiful-dnd'
 import { LucideIcon } from 'lucide-react'
+import { memo } from 'react'
 
 interface KanbanColumnProps {
   id: string
@@ -17,7 +18,12 @@ interface KanbanColumnProps {
   onReactivateAppointment: (appointment: Appointment) => Promise<void>
 }
 
-export function KanbanColumn({ 
+// Memoizar o AppointmentCard para evitar re-renders desnecessários
+const MemoizedAppointmentCard = memo(AppointmentCard, (prevProps, nextProps) => {
+  return JSON.stringify(prevProps.appointment) === JSON.stringify(nextProps.appointment)
+})
+
+function KanbanColumnComponent({ 
   id, 
   title, 
   appointments, 
@@ -27,6 +33,8 @@ export function KanbanColumn({
   onCancelAppointment,
   onReactivateAppointment
 }: KanbanColumnProps) {
+  console.log(`🔄 Rendering KanbanColumn: ${title} with ${appointments.length} appointments`)
+
   const getEmptyMessage = () => {
     switch (id) {
       case 'today': return 'Nenhum agendamento para hoje'
@@ -87,7 +95,7 @@ export function KanbanColumn({
                           }
                         `}
                       >
-                        <AppointmentCard
+                        <MemoizedAppointmentCard
                           appointment={appointment}
                           onMarkAsCompleted={onMarkAsCompleted}
                           onCancelAppointment={onCancelAppointment}
@@ -106,3 +114,10 @@ export function KanbanColumn({
     </Card>
   )
 }
+
+// Memoizar a coluna inteira para evitar re-renders quando as props não mudaram
+export const KanbanColumn = memo(KanbanColumnComponent, (prevProps, nextProps) => {
+  const appointmentsChanged = JSON.stringify(prevProps.appointments) !== JSON.stringify(nextProps.appointments)
+  console.log(`🔍 KanbanColumn memo check for ${nextProps.title}:`, { appointmentsChanged })
+  return !appointmentsChanged
+})

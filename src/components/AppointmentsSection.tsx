@@ -1,7 +1,9 @@
-import { useState } from 'react'
+
+import { useState, memo } from 'react'
 import { Appointment } from '@/types/appointment'
 import { useToast } from "@/hooks/use-toast"
 import { useAppointmentsDragDrop } from '@/hooks/appointments/useAppointmentsDragDrop'
+import { useKanbanOptimization } from '@/hooks/appointments/useKanbanOptimization'
 import { AppointmentsSectionEmpty } from '@/components/appointments/AppointmentsSectionEmpty'
 import { AppointmentsSectionLoading } from '@/components/appointments/AppointmentsSectionLoading'
 import { AppointmentsSectionHeader } from '@/components/appointments/AppointmentsSectionHeader'
@@ -27,6 +29,19 @@ interface AppointmentsSectionProps {
   onAddAppointment: (appointmentData: any, calendarId: string) => Promise<string>
 }
 
+// Memoizar o KanbanGrid para evitar re-renders desnecessários
+const MemoizedKanbanGrid = memo(AppointmentsKanbanGrid, (prevProps, nextProps) => {
+  // Comparar apenas as propriedades que realmente importam para o re-render
+  const todayChanged = JSON.stringify(prevProps.todayAppointments) !== JSON.stringify(nextProps.todayAppointments)
+  const upcomingChanged = JSON.stringify(prevProps.upcomingAppointments) !== JSON.stringify(nextProps.upcomingAppointments)
+  const cancelledChanged = JSON.stringify(prevProps.cancelledAppointments) !== JSON.stringify(nextProps.cancelledAppointments)
+  
+  console.log('🔍 Kanban memo check:', { todayChanged, upcomingChanged, cancelledChanged })
+  
+  // Se nada mudou, não re-renderizar
+  return !todayChanged && !upcomingChanged && !cancelledChanged
+})
+
 export function AppointmentsSection({
   todayAppointments,
   upcomingAppointments,
@@ -47,10 +62,22 @@ export function AppointmentsSection({
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
 
-  const { handleDragEnd } = useAppointmentsDragDrop({
+  // Usar otimização do Kanban
+  const {
+    optimizedTodayAppointments,
+    optimizedUpcomingAppointments,
+    optimizedCancelledAppointments,
+    hasChanges
+  } = useKanbanOptimization({
     todayAppointments,
     upcomingAppointments,
-    cancelledAppointments,
+    cancelledAppointments
+  })
+
+  const { handleDragEnd } = useAppointmentsDragDrop({
+    todayAppointments: optimizedTodayAppointments,
+    upcomingAppointments: optimizedUpcomingAppointments,
+    cancelledAppointments: optimizedCancelledAppointments,
     onCancelAppointment,
     onReactivateAppointment,
     onRescheduleAppointment: (appointment: Appointment) => {
@@ -92,14 +119,16 @@ export function AppointmentsSection({
     return <AppointmentsSectionLoading />
   }
 
+  console.log('🏗️ Rendering AppointmentsSection with changes:', hasChanges)
+
   return (
     <div className="mt-8">
       <AppointmentsSectionHeader onAddAppointment={() => setAddModalOpen(true)} />
       
-      <AppointmentsKanbanGrid
-        todayAppointments={todayAppointments}
-        upcomingAppointments={upcomingAppointments}
-        cancelledAppointments={cancelledAppointments}
+      <MemoizedKanbanGrid
+        todayAppointments={optimizedTodayAppointments}
+        upcomingAppointments={optimizedUpcomingAppointments}
+        cancelledAppointments={optimizedCancelledAppointments}
         onDragEnd={handleDragEnd}
         onMarkAsCompleted={onMarkAsCompleted}
         onCancelAppointment={onCancelAppointment}
