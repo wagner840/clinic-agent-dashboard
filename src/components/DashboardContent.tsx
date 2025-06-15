@@ -9,7 +9,7 @@ import { DoctorFilter } from '@/components/dashboard/DoctorFilter'
 import { EarningsButton } from '@/components/dashboard/EarningsButton'
 import { Appointment } from '@/types/appointment'
 import { CalendarListEntry } from '@/services/googleCalendar'
-import { useMemo, useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useDoctorEarnings } from '@/hooks/useDoctorEarnings'
 
 interface DashboardContentProps {
@@ -66,82 +66,82 @@ export function DashboardContent(props: DashboardContentProps) {
 
   const clinicTotals = getClinicTotals()
 
-  if (showEarnings) {
-    return (
-      <DashboardEarningsView
-        isGoogleInitialized={props.isGoogleInitialized}
-        isGoogleSignedIn={props.isGoogleSignedIn}
-        loading={props.loading}
-        currentGoogleUser={props.currentGoogleUser}
-        onGoogleAuth={props.onGoogleAuth}
-        onSwitchAccount={props.onSwitchAccount}
-        onSyncAppointments={props.onSyncAppointments}
-        onOpenSettings={() => props.onSettingsChange(true)}
-        onBackToDashboard={() => setShowEarnings(false)}
-        appointments={props.appointments}
-      />
-    )
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <DashboardHeader
-        isGoogleInitialized={props.isGoogleInitialized}
-        isGoogleSignedIn={props.isGoogleSignedIn}
-        loading={props.loading}
-        onGoogleAuth={props.onGoogleAuth}
-        onSwitchAccount={props.onSwitchAccount}
-        onSyncAppointments={props.onSyncAppointments}
-        currentGoogleUser={props.currentGoogleUser}
-        onOpenSettings={() => props.onSettingsChange(true)}
-      />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-        <GoogleAuthAlerts
+    <>
+      {showEarnings ? (
+        <DashboardEarningsView
           isGoogleInitialized={props.isGoogleInitialized}
           isGoogleSignedIn={props.isGoogleSignedIn}
-          error={props.error}
-          onGoogleSignIn={props.onGoogleSignIn}
-          onRetry={props.onRetry}
-          onClearError={props.onClearError}
           loading={props.loading}
           currentGoogleUser={props.currentGoogleUser}
+          onGoogleAuth={props.onGoogleAuth}
+          onSwitchAccount={props.onSwitchAccount}
+          onSyncAppointments={props.onSyncAppointments}
+          onOpenSettings={() => props.onSettingsChange(true)}
+          onBackToDashboard={() => setShowEarnings(false)}
+          appointments={props.appointments}
         />
+      ) : (
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+          <DashboardHeader
+            isGoogleInitialized={props.isGoogleInitialized}
+            isGoogleSignedIn={props.isGoogleSignedIn}
+            loading={props.loading}
+            onGoogleAuth={props.onGoogleAuth}
+            onSwitchAccount={props.onSwitchAccount}
+            onSyncAppointments={props.onSyncAppointments}
+            currentGoogleUser={props.currentGoogleUser}
+            onOpenSettings={() => props.onSettingsChange(true)}
+          />
 
-        {props.isGoogleSignedIn && props.doctorCalendars.length > 0 && (
-          <div className="flex justify-between items-center mb-6 sm:mb-8">
-            <DoctorFilter
-              doctorCalendars={props.doctorCalendars}
-              doctorFilter={props.doctorFilter}
-              onDoctorFilterChange={props.onDoctorFilterChange}
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+            <GoogleAuthAlerts
+              isGoogleInitialized={props.isGoogleInitialized}
+              isGoogleSignedIn={props.isGoogleSignedIn}
+              error={props.error}
+              onGoogleSignIn={props.onGoogleSignIn}
+              onRetry={props.onRetry}
+              onClearError={props.onClearError}
+              loading={props.loading}
+              currentGoogleUser={props.currentGoogleUser}
             />
 
-            {props.isGoogleSignedIn && (
-              <EarningsButton onShowEarnings={() => setShowEarnings(true)} />
-            )}
-          </div>
-        )}
+            {props.isGoogleSignedIn && props.doctorCalendars.length > 0 && (
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
+                <DoctorFilter
+                  doctorCalendars={props.doctorCalendars}
+                  doctorFilter={props.doctorFilter}
+                  onDoctorFilterChange={props.onDoctorFilterChange}
+                />
 
-        <DashboardMainContent
-          isGoogleSignedIn={props.isGoogleSignedIn}
-          loading={props.loading}
-          appointments={props.appointments}
-          doctorCalendars={props.doctorCalendars}
-          todayAppointments={props.todayAppointments}
-          upcomingAppointments={props.upcomingAppointments}
-          pastAppointments={props.pastAppointments}
-          completedAppointments={props.completedAppointments}
-          cancelledAppointments={props.cancelledAppointments}
-          clinicTotalEarnings={clinicTotals.totalAmount}
-          totalCancelledAppointments={props.cancelledAppointments.length}
-          onGoogleSignIn={props.onGoogleSignIn}
-          onMarkAsCompleted={props.onMarkAsCompleted}
-          onRescheduleAppointment={props.onRescheduleAppointment}
-          onCancelAppointment={props.onCancelAppointment}
-          onReactivateAppointment={props.onReactivateAppointment}
-          onAddAppointment={props.onAddAppointment}
-        />
-      </main>
+                {props.isGoogleSignedIn && (
+                  <EarningsButton onShowEarnings={() => setShowEarnings(true)} />
+                )}
+              </div>
+            )}
+
+            <DashboardMainContent
+              isGoogleSignedIn={props.isGoogleSignedIn}
+              loading={props.loading}
+              appointments={props.appointments}
+              doctorCalendars={props.doctorCalendars}
+              todayAppointments={props.todayAppointments}
+              upcomingAppointments={props.upcomingAppointments}
+              pastAppointments={props.pastAppointments}
+              completedAppointments={props.completedAppointments}
+              cancelledAppointments={props.cancelledAppointments}
+              clinicTotalEarnings={clinicTotals.totalAmount}
+              totalCancelledAppointments={props.cancelledAppointments.length}
+              onGoogleSignIn={props.onGoogleSignIn}
+              onMarkAsCompleted={props.onMarkAsCompleted}
+              onRescheduleAppointment={props.onRescheduleAppointment}
+              onCancelAppointment={props.onCancelAppointment}
+              onReactivateAppointment={props.onReactivateAppointment}
+              onAddAppointment={props.onAddAppointment}
+            />
+          </main>
+        </div>
+      )}
 
       <PaymentDialog
         appointment={props.paymentAppointment}
@@ -159,6 +159,6 @@ export function DashboardContent(props: DashboardContentProps) {
         onAddHolidaysToAll={props.onAddHolidaysToAll}
         accessToken={props.accessToken}
       />
-    </div>
+    </>
   )
 }

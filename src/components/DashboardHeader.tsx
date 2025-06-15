@@ -1,4 +1,5 @@
-import { Activity, RefreshCw, Users, LogOut, Calendar, UserCheck, Settings } from 'lucide-react'
+
+import { Activity, RefreshCw, Users, LogOut, Calendar, UserCheck, Settings, MoreVertical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -7,7 +8,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useAuth } from '@/hooks/useAuth'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 interface DashboardHeaderProps {
   isGoogleInitialized: boolean
@@ -35,6 +44,78 @@ export function DashboardHeader({
   onOpenSettings
 }: DashboardHeaderProps) {
   const { user, signOut } = useAuth()
+  const isMobile = useIsMobile()
+
+  if (isMobile) {
+    return (
+      <header className="bg-background shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-2">
+              <Activity className="h-7 w-7 text-primary" />
+              <div>
+                <h1 className="text-lg font-semibold text-foreground">Dashboard</h1>
+                <p className="text-xs text-muted-foreground">Gestão de Consultas</p>
+              </div>
+            </div>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreVertical className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-2 py-1.5">
+                  <p className="text-sm font-medium text-foreground">Dr(a). {user?.email?.split('@')[0]}</p>
+                  {isGoogleSignedIn && (
+                    <div className="text-xs text-green-600 flex items-center space-x-1 mt-1">
+                      <UserCheck className="h-3 w-3" />
+                      <span>Google conectado</span>
+                    </div>
+                  )}
+                </div>
+                <DropdownMenuSeparator />
+                {isGoogleInitialized && (
+                   <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                      <Button 
+                        variant={isGoogleSignedIn ? "destructive" : "default"}
+                        onClick={onGoogleAuth}
+                        disabled={loading}
+                        size="sm"
+                        className="w-full"
+                      >
+                        <Calendar className="h-4 w-4 mr-2" />
+                        {isGoogleSignedIn ? 'Desconectar' : 'Conectar Google'}
+                      </Button>
+                    </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={onSwitchAccount} disabled={loading}>
+                  <Users className="mr-2" />
+                  <span>Trocar conta Google</span>
+                </DropdownMenuItem>
+                {isGoogleSignedIn && (
+                  <DropdownMenuItem onClick={onSyncAppointments} disabled={loading}>
+                    <RefreshCw className={`mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    <span>Sincronizar</span>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onOpenSettings}>
+                  <Settings className="mr-2" />
+                  <span>Configurações</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={signOut}>
+                  <LogOut className="mr-2" />
+                  <span>Sair</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </header>
+    )
+  }
 
   return (
     <TooltipProvider>
@@ -60,7 +141,7 @@ export function DashboardHeader({
                   Dr(a). {user?.email?.split('@')[0]}
                 </div>
                 {isGoogleSignedIn && currentGoogleUser && (
-                  <div className="text-xs text-green-600 flex items-center justify-center space-x-1">
+                  <div className="text-xs text-green-600 flex items-center justify-end space-x-1">
                     <UserCheck className="h-3 w-3" />
                     <span>Google conectado</span>
                   </div>
