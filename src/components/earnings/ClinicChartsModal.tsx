@@ -106,15 +106,15 @@ export function ClinicChartsModal({
 
           <Tabs value={chartType} onValueChange={value => setChartType(value as 'bar' | 'line' | 'pie')}>
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="bar" className="flex items-center space-x-2 text-xs sm:text-sm">
+              <TabsTrigger value="bar" className="flex items-center space-x-2 text-xs sm:text-sm py-3">
                 <BarChart3 className="h-4 w-4" />
                 <span>Barras</span>
               </TabsTrigger>
-              <TabsTrigger value="line" className="flex items-center space-x-2 text-xs sm:text-sm">
+              <TabsTrigger value="line" className="flex items-center space-x-2 text-xs sm:text-sm py-3">
                 <TrendingUp className="h-4 w-4" />
                 <span>Linhas</span>
               </TabsTrigger>
-              <TabsTrigger value="pie" className="flex items-center space-x-2 text-xs sm:text-sm">
+              <TabsTrigger value="pie" className="flex items-center space-x-2 text-xs sm:text-sm py-3">
                 <PieChartIcon className="h-4 w-4" />
                 <span>Pizza</span>
               </TabsTrigger>

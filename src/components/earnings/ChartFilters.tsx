@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -99,7 +100,7 @@ export function ChartFilters({ onFiltersChange }: ChartFiltersProps) {
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground">Período</label>
               <Select value={filters.timeRange} onValueChange={(value) => updateFilter('timeRange', value as any)}>
-                <SelectTrigger className="text-xs">
+                <SelectTrigger className="text-xs h-10">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -115,7 +116,7 @@ export function ChartFilters({ onFiltersChange }: ChartFiltersProps) {
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground">Dia da Semana</label>
               <Select value={filters.dayOfWeek} onValueChange={(value) => updateFilter('dayOfWeek', value as any)}>
-                <SelectTrigger className="text-xs">
+                <SelectTrigger className="text-xs h-10">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -129,7 +130,7 @@ export function ChartFilters({ onFiltersChange }: ChartFiltersProps) {
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground">Mês</label>
               <Select value={filters.month} onValueChange={(value) => updateFilter('month', value as any)}>
-                <SelectTrigger className="text-xs">
+                <SelectTrigger className="text-xs h-10">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -143,7 +144,7 @@ export function ChartFilters({ onFiltersChange }: ChartFiltersProps) {
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground">Ano</label>
               <Select value={filters.year} onValueChange={(value) => updateFilter('year', value as any)}>
-                <SelectTrigger className="text-xs">
+                <SelectTrigger className="text-xs h-10">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

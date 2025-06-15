@@ -29,7 +29,7 @@ export function ChartControls({
       <div className="flex flex-col space-y-2">
         <label className="text-sm font-medium">Visualização</label>
         <Select value={viewMode} onValueChange={onViewModeChange}>
-          <SelectTrigger>
+          <SelectTrigger className="h-11">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -43,7 +43,7 @@ export function ChartControls({
         <div className="flex flex-col space-y-2">
           <label className="text-sm font-medium">Médico</label>
           <Select value={selectedDoctor} onValueChange={onDoctorChange}>
-            <SelectTrigger>
+            <SelectTrigger className="h-11">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -59,7 +59,7 @@ export function ChartControls({
       <div className="flex flex-col space-y-2">
         <label className="text-sm font-medium">Tipo de Dados</label>
         <Select value={dataType} onValueChange={onDataTypeChange}>
-          <SelectTrigger>
+          <SelectTrigger className="h-11">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -72,7 +72,7 @@ export function ChartControls({
       <div className="flex flex-col space-y-2">
         <label className="text-sm font-medium">Comparação</label>
         <Select value={comparisonMode} onValueChange={onComparisonModeChange}>
-          <SelectTrigger>
+          <SelectTrigger className="h-11">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
