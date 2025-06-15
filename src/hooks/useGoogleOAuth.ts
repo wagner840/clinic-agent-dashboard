@@ -209,7 +209,7 @@ export function useGoogleOAuth() {
 
   const forceAccountSelection = async () => {
     try {
-      console.log('Forçando seleção de conta...')
+      console.log('Forçando seleção de conta com disconnect...')
       
       const authInstance = window.gapi.auth2.getAuthInstance()
       
@@ -217,16 +217,16 @@ export function useGoogleOAuth() {
         throw new Error('Instância de autenticação não está disponível')
       }
       
-      // Primeiro, desconecta se estiver conectado
+      // Revoga o acesso se estiver conectado para forçar re-autenticação
       if (authInstance.isSignedIn.get()) {
-        console.log('Desconectando conta atual...')
-        await authInstance.signOut()
+        console.log('Revogando acesso da conta atual...')
+        await authInstance.disconnect()
         
         // Aguarda para garantir que a desconexão foi processada
         await new Promise(resolve => setTimeout(resolve, 500))
       }
       
-      // Força nova autenticação com prompt de seleção
+      // Força nova autenticação com prompt de seleção de conta
       console.log('Iniciando nova autenticação...')
       await signIn(true)
       
