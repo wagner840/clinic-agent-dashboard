@@ -86,12 +86,12 @@ export class GoogleCalendarService {
     }
   }
 
-  async fetchEvents(accessToken: string | null, timeMin?: string, timeMax?: string): Promise<GoogleCalendarEvent[]> {
+  async fetchEvents(accessToken: string | null, timeMin?: string, timeMax?: string): Promise<CalendarEvent[]> {
     this.checkToken(accessToken)
     
     const params = new URLSearchParams({
       timeMin: timeMin || new Date().toISOString(),
-      showDeleted: 'false',
+      showDeleted: 'true',
       singleEvents: 'true',
       orderBy: 'startTime',
       maxResults: '50',
@@ -147,10 +147,10 @@ export class GoogleCalendarService {
     )
   }
 
-  convertToAppointment(event: GoogleCalendarEvent, doctorEmail: string): Appointment {
-    // Extrai informações do paciente do título ou descrição
+  convertToAppointment(event: CalendarEvent, doctorEmail: string): Appointment {
     const patientName = this.extractPatientName(event.summary)
     const patientEmail = event.attendees?.find(a => a.email !== doctorEmail)?.email || ''
+    const patientPhone = this.extractPatientPhone(event.description)
     
     return {
       id: event.id,
@@ -160,19 +160,19 @@ export class GoogleCalendarService {
       description: event.description,
       patient: {
         name: patientName,
-        email: patientEmail
+        email: patientEmail,
+        phone: patientPhone
       },
       doctor: {
         name: 'Dr. Sistema',
         email: doctorEmail
       },
-      status: 'scheduled',
+      status: this.convertGCalStatus(event.status),
       type: this.determineAppointmentType(event.summary)
     }
   }
 
   private extractPatientName(summary: string): string {
-    // Extrai o nome do paciente do título
     const match = summary.match(/(?:Consulta|Retorno|Procedimento)\s*-\s*(.+)/i)
     return match ? match[1].trim() : summary
   }
@@ -186,6 +186,22 @@ export class GoogleCalendarService {
       return 'procedure'
     }
     return 'consultation'
+  }
+
+  private convertGCalStatus(status?: 'confirmed' | 'tentative' | 'cancelled'): 'scheduled' | 'completed' | 'cancelled' {
+    if (status === 'cancelled') {
+      return 'cancelled'
+    }
+    return 'scheduled'
+  }
+
+  private extractPatientPhone(description?: string): string | undefined {
+    if (!description) {
+      return undefined
+    }
+    const phoneRegex = /(?:telefone|celular|contato|phone|cell|tel)\s*[:\- ]?\s*(\+?[0-9\s.\-()]{8,})/i
+    const match = description.match(phoneRegex)
+    return match ? match[1].trim() : undefined
   }
 }
 

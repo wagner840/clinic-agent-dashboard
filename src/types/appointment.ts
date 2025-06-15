@@ -34,4 +34,5 @@ export interface CalendarEvent {
     email: string
     displayName?: string
   }>
+  status?: 'confirmed' | 'tentative' | 'cancelled'
 }
