@@ -1,6 +1,13 @@
 
-import { Activity, AlertCircle, RefreshCw, Users } from 'lucide-react'
+import { Activity, RefreshCw, Users, LogOut, Calendar, UserCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { useAuth } from '@/hooks/useAuth'
 
 interface DashboardHeaderProps {
@@ -29,79 +36,127 @@ export function DashboardHeader({
   const { user, signOut } = useAuth()
 
   return (
-    <header className="bg-white shadow-sm border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-4">
-            <Activity className="h-8 w-8 text-blue-600" />
-            <h1 className="text-xl font-semibold text-gray-900">
-              Dashboard Médico
-            </h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">
-              Olá, Dr(a). {user?.email}
-            </span>
-            
-            {/* Informações da conta Google atual */}
-            {isGoogleSignedIn && currentGoogleUser && (
-              <div className="text-xs bg-green-50 px-2 py-1 rounded border border-green-200">
-                <span className="text-green-700">
-                  Google: {currentGoogleUser.email}
-                </span>
+    <TooltipProvider>
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-4">
+              <Activity className="h-8 w-8 text-blue-600" />
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900">
+                  Dashboard Médico
+                </h1>
+                <p className="text-xs text-gray-500">
+                  Sistema de Gestão de Consultas
+                </p>
               </div>
-            )}
+            </div>
             
-            {/* Status da API Google */}
-            {!isGoogleInitialized && (
-              <span className="text-xs text-orange-600">
-                Carregando Google API...
-              </span>
-            )}
-
-            {/* Botões de autenticação Google */}
-            {isGoogleInitialized && (
-              <div className="flex items-center space-x-2">
-                <Button 
-                  variant="outline" 
-                  onClick={onGoogleAuth}
-                  disabled={loading}
-                  className={isGoogleSignedIn ? "border-green-500 text-green-700" : "border-red-500 text-red-700"}
-                >
-                  {isGoogleSignedIn ? 'Desconectar Google' : 'Conectar Google Calendar'}
-                </Button>
-
-                {/* Botão para forçar seleção de conta */}
-                <Button 
-                  variant="outline" 
-                  onClick={onSwitchAccount}
-                  disabled={loading}
-                  className="border-blue-500 text-blue-700"
-                  title="Selecionar conta diferente"
-                >
-                  <Users className="h-4 w-4 mr-2" />
-                  Trocar Conta
-                </Button>
+            <div className="flex items-center space-x-4">
+              {/* Informações do usuário */}
+              <div className="text-right">
+                <div className="text-sm font-medium text-gray-900">
+                  Dr(a). {user?.email?.split('@')[0]}
+                </div>
+                {isGoogleSignedIn && currentGoogleUser && (
+                  <div className="text-xs text-green-600 flex items-center space-x-1">
+                    <UserCheck className="h-3 w-3" />
+                    <span>Google conectado</span>
+                  </div>
+                )}
               </div>
-            )}
+              
+              {/* Status da integração Google */}
+              {!isGoogleInitialized && (
+                <Badge variant="outline" className="text-orange-600 border-orange-300">
+                  Carregando Google API...
+                </Badge>
+              )}
 
-            {/* Botão de sincronização */}
-            {isGoogleSignedIn && (
-              <Button 
-                variant="outline" 
-                onClick={onSyncAppointments}
-                disabled={loading}
-              >
-                {loading ? 'Sincronizando...' : 'Sincronizar'}
-              </Button>
-            )}
+              {/* Botões de ação */}
+              {isGoogleInitialized && (
+                <div className="flex items-center space-x-2">
+                  {/* Botão principal Google */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant={isGoogleSignedIn ? "destructive" : "default"}
+                        onClick={onGoogleAuth}
+                        disabled={loading}
+                        size="sm"
+                      >
+                        <Calendar className="h-4 w-4 mr-2" />
+                        {isGoogleSignedIn ? 'Desconectar' : 'Conectar Google'}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        {isGoogleSignedIn 
+                          ? 'Desconectar do Google Calendar' 
+                          : 'Conectar ao Google Calendar para sincronizar agendamentos'
+                        }
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
 
-            <Button variant="outline" onClick={signOut}>
-              Sair
-            </Button>
+                  {/* Botão trocar conta */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        onClick={onSwitchAccount}
+                        disabled={loading}
+                        size="sm"
+                      >
+                        <Users className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Trocar conta do Google</p>
+                    </TooltipContent>
+                  </Tooltip>
+
+                  {/* Botão sincronizar */}
+                  {isGoogleSignedIn && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          onClick={onSyncAppointments}
+                          disabled={loading}
+                          size="sm"
+                        >
+                          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Sincronizar agendamentos do Google Calendar</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
+              )}
+
+              {/* Botão sair */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    onClick={signOut}
+                    size="sm"
+                    className="text-gray-600 hover:text-gray-900"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Sair do sistema</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </TooltipProvider>
   )
 }

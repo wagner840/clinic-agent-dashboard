@@ -7,6 +7,7 @@ import { DashboardHeader } from '@/components/DashboardHeader'
 import { GoogleAuthAlerts } from '@/components/GoogleAuthAlerts'
 import { AppointmentsSection } from '@/components/AppointmentsSection'
 import { PaymentDialog } from '@/components/PaymentDialog'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { Appointment } from '@/types/appointment'
 
 export default function Dashboard() {
@@ -88,56 +89,58 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardHeader
-        isGoogleInitialized={isGoogleInitialized}
-        isGoogleSignedIn={isGoogleSignedIn}
-        loading={loading}
-        onGoogleAuth={handleGoogleAuth}
-        onSwitchAccount={handleSwitchAccount}
-        onSyncAppointments={fetchAppointments}
-        currentGoogleUser={currentGoogleUser}
-      />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <GoogleAuthAlerts
+    <TooltipProvider>
+      <div className="min-h-screen bg-gray-50">
+        <DashboardHeader
           isGoogleInitialized={isGoogleInitialized}
           isGoogleSignedIn={isGoogleSignedIn}
-          error={error}
-          onGoogleSignIn={googleSignIn}
-          onRetry={handleRetry}
-          onClearError={clearError}
           loading={loading}
+          onGoogleAuth={handleGoogleAuth}
+          onSwitchAccount={handleSwitchAccount}
+          onSyncAppointments={fetchAppointments}
           currentGoogleUser={currentGoogleUser}
         />
 
-        <DashboardStats 
-          totalAppointments={appointments.length}
-          todayAppointments={todayAppointments.length}
-          upcomingAppointments={upcomingAppointments.length}
-        />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <GoogleAuthAlerts
+            isGoogleInitialized={isGoogleInitialized}
+            isGoogleSignedIn={isGoogleSignedIn}
+            error={error}
+            onGoogleSignIn={googleSignIn}
+            onRetry={handleRetry}
+            onClearError={clearError}
+            loading={loading}
+            currentGoogleUser={currentGoogleUser}
+          />
 
-        <AppointmentsSection
-          todayAppointments={todayAppointments}
-          upcomingAppointments={upcomingAppointments}
-          cancelledAppointments={cancelledAppointments}
-          isGoogleSignedIn={isGoogleSignedIn}
-          isGoogleInitialized={isGoogleInitialized}
-          loading={loading && isGoogleSignedIn}
-          onGoogleSignIn={googleSignIn}
-          onMarkAsCompleted={handleMarkAsCompleted}
-        />
-      </main>
+          <DashboardStats 
+            totalAppointments={appointments.length}
+            todayAppointments={todayAppointments.length}
+            upcomingAppointments={upcomingAppointments.length}
+          />
 
-      <PaymentDialog
-        appointment={paymentAppointment}
-        isOpen={!!paymentAppointment}
-        onClose={() => setPaymentAppointment(null)}
-        onPaymentSuccess={() => {
-          fetchAppointments()
-          setPaymentAppointment(null)
-        }}
-      />
-    </div>
+          <AppointmentsSection
+            todayAppointments={todayAppointments}
+            upcomingAppointments={upcomingAppointments}
+            cancelledAppointments={cancelledAppointments}
+            isGoogleSignedIn={isGoogleSignedIn}
+            isGoogleInitialized={isGoogleInitialized}
+            loading={loading && isGoogleSignedIn}
+            onGoogleSignIn={googleSignIn}
+            onMarkAsCompleted={handleMarkAsCompleted}
+          />
+        </main>
+
+        <PaymentDialog
+          appointment={paymentAppointment}
+          isOpen={!!paymentAppointment}
+          onClose={() => setPaymentAppointment(null)}
+          onPaymentSuccess={() => {
+            fetchAppointments()
+            setPaymentAppointment(null)
+          }}
+        />
+      </div>
+    </TooltipProvider>
   )
 }

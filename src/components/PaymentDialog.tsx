@@ -12,10 +12,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { Appointment } from '@/types/appointment'
 import { useToast } from "@/hooks/use-toast"
+import { DollarSign, Clock, User, CreditCard, Building } from 'lucide-react'
 
 interface PaymentDialogProps {
   appointment: Appointment | null
@@ -35,6 +37,17 @@ export function PaymentDialog({ appointment, isOpen, onClose, onPaymentSuccess }
     setAmount('')
     setIsInsurance(false)
     onClose()
+  }
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('pt-BR', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    })
+  }
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('pt-BR')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -65,8 +78,9 @@ export function PaymentDialog({ appointment, isOpen, onClose, onPaymentSuccess }
       })
     } else {
       toast({
-        title: 'Pagamento salvo com sucesso!',
-        description: `O agendamento de ${appointment.patient.name} foi marcado como concluído.`,
+        title: 'Pagamento registrado com sucesso!',
+        description: `Consulta de ${appointment.patient.name} finalizada.`,
+        duration: 5000,
       })
       onPaymentSuccess()
       resetForm()
@@ -75,47 +89,114 @@ export function PaymentDialog({ appointment, isOpen, onClose, onPaymentSuccess }
 
   if (!appointment) return null
 
+  const isValidAmount = amount && parseFloat(amount) > 0
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && resetForm()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Registrar Pagamento para Agendamento</DialogTitle>
-          <DialogDescription>
-            Confirme os detalhes do pagamento para marcar o agendamento de <span className="font-semibold">{appointment.patient.name}</span> como concluído.
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader className="space-y-3">
+          <DialogTitle className="flex items-center space-x-2">
+            <DollarSign className="h-5 w-5 text-green-600" />
+            <span>Finalizar Consulta</span>
+          </DialogTitle>
+          <DialogDescription className="text-left">
+            Registre o pagamento para finalizar a consulta
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="amount" className="text-right">
-                Valor (R$)
-              </Label>
-              <Input
-                id="amount"
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="col-span-3"
-                required
-                step="0.01"
-                placeholder="Ex: 150.00"
-              />
+
+        {/* Informações da consulta */}
+        <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-700">Paciente:</span>
+            <div className="flex items-center space-x-2">
+              <User className="h-4 w-4 text-gray-500" />
+              <span className="text-sm font-semibold">{appointment.patient.name}</span>
             </div>
-            <div className="flex items-center space-x-2 justify-end pt-2">
-              <Label htmlFor="is-insurance">Pagamento por convênio?</Label>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-700">Data/Hora:</span>
+            <div className="flex items-center space-x-2">
+              <Clock className="h-4 w-4 text-gray-500" />
+              <span className="text-sm">
+                {formatDate(appointment.start)} às {formatTime(appointment.start)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="amount" className="text-sm font-medium">
+                Valor do Pagamento (R$) *
+              </Label>
+              <div className="relative">
+                <Input
+                  id="amount"
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  required
+                  step="0.01"
+                  min="0"
+                  placeholder="0,00"
+                  className="pl-8"
+                />
+                <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-center space-x-2">
+                {isInsurance ? (
+                  <Building className="h-4 w-4 text-blue-600" />
+                ) : (
+                  <CreditCard className="h-4 w-4 text-blue-600" />
+                )}
+                <Label htmlFor="is-insurance" className="text-sm font-medium text-blue-800">
+                  {isInsurance ? 'Pagamento via convênio' : 'Pagamento particular'}
+                </Label>
+              </div>
               <Switch
                 id="is-insurance"
                 checked={isInsurance}
                 onCheckedChange={setIsInsurance}
               />
             </div>
+
+            {isInsurance && (
+              <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded border-l-2 border-blue-400">
+                💡 Lembre-se de verificar a cobertura do convênio
+              </div>
+            )}
           </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={resetForm} disabled={loading}>
+
+          <DialogFooter className="space-x-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={resetForm} 
+              disabled={loading}
+              className="flex-1"
+            >
               Cancelar
             </Button>
-            <Button type="submit" disabled={!amount || loading}>
-              {loading ? 'Salvando...' : 'Salvar Pagamento'}
+            <Button 
+              type="submit" 
+              disabled={!isValidAmount || loading}
+              className="flex-1 bg-green-600 hover:bg-green-700"
+            >
+              {loading ? (
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Salvando...</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <DollarSign className="h-4 w-4" />
+                  <span>Finalizar Consulta</span>
+                </div>
+              )}
             </Button>
           </DialogFooter>
         </form>
