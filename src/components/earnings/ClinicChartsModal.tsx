@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -52,11 +51,117 @@ export function ClinicChartsModal({ isOpen, onClose, totalEarnings }: ClinicChar
     }).format(value)
   }
 
-  // Aplicar filtros aos dados (simulação - em um caso real você filtraria os dados brutos)
+  // Função para aplicar filtros de data
+  const applyDateFilters = (earnings: DoctorTotalEarnings[]): DoctorTotalEarnings[] => {
+    return earnings.filter(doctor => {
+      // Se não tem datas, não pode filtrar
+      if (!doctor.first_appointment_date || !doctor.last_appointment_date) {
+        return filters.timeRange === 'all' && filters.month === 'all' && filters.year === 'all'
+      }
+
+      const firstDate = new Date(doctor.first_appointment_date)
+      const lastDate = new Date(doctor.last_appointment_date)
+      const now = new Date()
+
+      // Filtro por período de tempo
+      if (filters.timeRange !== 'all') {
+        let cutoffDate: Date
+        switch (filters.timeRange) {
+          case 'last-week':
+            cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+            break
+          case 'last-month':
+            cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+            break
+          case 'last-3months':
+            cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+            break
+          case 'last-year':
+            cutoffDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
+            break
+          default:
+            cutoffDate = new Date(0)
+        }
+        
+        // Verifica se o médico teve consultas no período
+        if (lastDate < cutoffDate) {
+          return false
+        }
+      }
+
+      // Filtro por mês
+      if (filters.month !== 'all') {
+        const monthNum = parseInt(filters.month)
+        const hasAppointmentInMonth = 
+          (firstDate.getMonth() + 1 <= monthNum && lastDate.getMonth() + 1 >= monthNum) ||
+          firstDate.getMonth() + 1 === monthNum ||
+          lastDate.getMonth() + 1 === monthNum
+        
+        if (!hasAppointmentInMonth) {
+          return false
+        }
+      }
+
+      // Filtro por ano
+      if (filters.year !== 'all') {
+        const yearNum = parseInt(filters.year)
+        const hasAppointmentInYear = 
+          firstDate.getFullYear() <= yearNum && lastDate.getFullYear() >= yearNum
+        
+        if (!hasAppointmentInYear) {
+          return false
+        }
+      }
+
+      return true
+    })
+  }
+
+  // Função para aplicar filtros de dia da semana (simulado - em um caso real precisaríamos dos dados detalhados)
+  const applyDayOfWeekFilter = (earnings: DoctorTotalEarnings[]): DoctorTotalEarnings[] => {
+    if (filters.dayOfWeek === 'all') {
+      return earnings
+    }
+
+    // Como não temos dados detalhados por dia da semana, vamos simular uma redução proporcional
+    const dayFactors = {
+      'monday': 0.15,
+      'tuesday': 0.15,
+      'wednesday': 0.15,
+      'thursday': 0.15,
+      'friday': 0.15,
+      'saturday': 0.15,
+      'sunday': 0.10
+    }
+
+    const factor = dayFactors[filters.dayOfWeek as keyof typeof dayFactors] || 1
+
+    return earnings.map(doctor => ({
+      ...doctor,
+      total_amount: Math.round(doctor.total_amount * factor),
+      total_appointments: Math.round(doctor.total_appointments * factor),
+      private_amount: Math.round(doctor.private_amount * factor),
+      private_appointments: Math.round(doctor.private_appointments * factor),
+      insurance_amount: Math.round(doctor.insurance_amount * factor),
+      insurance_appointments: Math.round(doctor.insurance_appointments * factor)
+    })).filter(doctor => doctor.total_appointments > 0)
+  }
+
+  // Aplicar todos os filtros
   const getFilteredEarnings = () => {
-    // Por enquanto retorna os dados originais, mas aqui você implementaria a lógica de filtragem
-    // baseada nos filtros de tempo, dia da semana, mês e ano
-    return totalEarnings
+    console.log('🔍 Aplicando filtros:', filters)
+    
+    let filtered = [...totalEarnings]
+    
+    // Aplicar filtros de data
+    filtered = applyDateFilters(filtered)
+    console.log('📅 Após filtros de data:', filtered.length, 'médicos')
+    
+    // Aplicar filtro de dia da semana
+    filtered = applyDayOfWeekFilter(filtered)
+    console.log('📆 Após filtro de dia da semana:', filtered.length, 'médicos')
+    
+    return filtered
   }
 
   const filteredEarnings = getFilteredEarnings()
@@ -116,6 +221,7 @@ export function ClinicChartsModal({ isOpen, onClose, totalEarnings }: ClinicChar
 
   const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
 
+  // Função para renderizar o gráfico
   const renderChart = () => {
     if (chartType === 'pie') {
       return (
@@ -244,6 +350,11 @@ export function ClinicChartsModal({ isOpen, onClose, totalEarnings }: ClinicChar
               </DialogTitle>
               <DialogDescription>
                 Visualize e compare os dados de faturamento e consultas
+                {(filters.timeRange !== 'all' || filters.dayOfWeek !== 'all' || filters.month !== 'all' || filters.year !== 'all') && (
+                  <span className="block text-blue-600 font-medium mt-1">
+                    Filtros ativos - {filteredEarnings.length} de {totalEarnings.length} médicos
+                  </span>
+                )}
               </DialogDescription>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose}>
@@ -265,6 +376,11 @@ export function ClinicChartsModal({ isOpen, onClose, totalEarnings }: ClinicChar
               <div className="text-2xl font-bold text-green-600">
                 {formatCurrency(totalClinicAmount)}
               </div>
+              {filteredEarnings.length !== totalEarnings.length && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  de {formatCurrency(totalEarnings.reduce((sum, doctor) => sum + doctor.total_amount, 0))} total
+                </div>
+              )}
             </CardContent>
           </Card>
           <Card>
@@ -275,6 +391,11 @@ export function ClinicChartsModal({ isOpen, onClose, totalEarnings }: ClinicChar
               <div className="text-2xl font-bold text-blue-600">
                 {totalClinicAppointments}
               </div>
+              {filteredEarnings.length !== totalEarnings.length && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  de {totalEarnings.reduce((sum, doctor) => sum + doctor.total_appointments, 0)} total
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -361,6 +482,11 @@ export function ClinicChartsModal({ isOpen, onClose, totalEarnings }: ClinicChar
                 <CardTitle className="text-lg">
                   {dataType === 'amount' ? 'Faturamento' : 'Consultas'} 
                   {viewMode === 'combined' ? ' - Total da Clínica' : ' por Médico'}
+                  {filteredEarnings.length !== totalEarnings.length && (
+                    <span className="text-sm font-normal text-muted-foreground ml-2">
+                      (Filtrado)
+                    </span>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -386,6 +512,15 @@ export function ClinicChartsModal({ isOpen, onClose, totalEarnings }: ClinicChar
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-blue-500 rounded"></div>
               <span className="text-sm">Convênio</span>
+            </div>
+          </div>
+        )}
+
+        {/* Aviso quando nenhum dado é encontrado */}
+        {filteredEarnings.length === 0 && (
+          <div className="text-center py-8">
+            <div className="text-muted-foreground">
+              Nenhum dado encontrado com os filtros aplicados.
             </div>
           </div>
         )}
