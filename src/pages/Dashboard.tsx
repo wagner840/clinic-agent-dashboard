@@ -4,7 +4,7 @@ import { DashboardStats } from '@/components/DashboardStats'
 import { DashboardHeader } from '@/components/DashboardHeader'
 import { GoogleAuthAlerts } from '@/components/GoogleAuthAlerts'
 import { AppointmentsSection } from '@/components/AppointmentsSection'
-import { useGoogleOAuth } from '@/hooks/useGoogleOAuth'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function Dashboard() {
   const { 
@@ -22,11 +22,15 @@ export default function Dashboard() {
     clearError
   } = useGoogleCalendarReal()
 
-  const { getCurrentUser } = useGoogleOAuth()
+  const { user } = useAuth()
 
   const todayAppointments = getTodayAppointments()
   const upcomingAppointments = getUpcomingAppointments()
-  const currentGoogleUser = getCurrentUser()
+  const currentGoogleUser = isGoogleSignedIn && user ? {
+    email: user.email || '',
+    name: user.user_metadata?.full_name || user.email || 'Usuário',
+    imageUrl: user.user_metadata?.avatar_url || ''
+  } : null
 
   console.log('Google Calendar OAuth status:', {
     isGoogleInitialized,
@@ -74,7 +78,6 @@ export default function Dashboard() {
           currentGoogleUser={currentGoogleUser}
         />
 
-        {/* Stats Cards */}
         <DashboardStats 
           totalAppointments={appointments.length}
           todayAppointments={todayAppointments.length}

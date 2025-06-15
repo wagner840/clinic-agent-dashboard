@@ -2,6 +2,7 @@
 import { CalendarEvent, Appointment } from '@/types/appointment'
 
 const CALENDAR_ID = 'primary'
+const GOOGLE_API_BASE_URL = 'https://www.googleapis.com/calendar/v3'
 
 interface GoogleCalendarEvent {
   id: string
@@ -21,82 +22,97 @@ interface GoogleCalendarEvent {
   }>
 }
 
+async function googleApiRequest(url: string, accessToken: string, options: RequestInit = {}) {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    console.error('Google API Error:', errorData)
+    const errorMessage = errorData.error?.message || `Request failed with status ${response.status}`
+    throw new Error(errorMessage)
+  }
+
+  if (response.status === 204) {
+    return null
+  }
+
+  return response.json()
+}
+
 export class GoogleCalendarService {
-  private ensureAuthenticated() {
-    if (!window.gapi?.auth2) {
-      throw new Error('Google API não foi inicializada')
-    }
-
-    const authInstance = window.gapi.auth2.getAuthInstance()
-    if (!authInstance.isSignedIn.get()) {
-      throw new Error('Usuário não está autenticado com Google')
+  private checkToken(accessToken?: string | null): asserts accessToken is string {
+    if (!accessToken) {
+      throw new Error('Google access token is required')
     }
   }
 
-  async fetchEvents(timeMin?: string, timeMax?: string): Promise<GoogleCalendarEvent[]> {
-    try {
-      this.ensureAuthenticated()
-      
-      const response = await window.gapi.client.calendar.events.list({
-        calendarId: CALENDAR_ID,
-        timeMin: timeMin || new Date().toISOString(),
-        timeMax: timeMax,
-        showDeleted: false,
-        singleEvents: true,
-        orderBy: 'startTime',
-        maxResults: 50
-      })
-
-      return response.result.items || []
-    } catch (error) {
-      console.error('Erro ao buscar eventos do Google Calendar:', error)
-      throw error
+  async fetchEvents(accessToken: string | null, timeMin?: string, timeMax?: string): Promise<GoogleCalendarEvent[]> {
+    this.checkToken(accessToken)
+    
+    const params = new URLSearchParams({
+      timeMin: timeMin || new Date().toISOString(),
+      showDeleted: 'false',
+      singleEvents: 'true',
+      orderBy: 'startTime',
+      maxResults: '50',
+    })
+    if (timeMax) {
+      params.append('timeMax', timeMax)
     }
+
+    const data = await googleApiRequest(
+      `${GOOGLE_API_BASE_URL}/calendars/${CALENDAR_ID}/events?${params.toString()}`,
+      accessToken
+    )
+
+    return data.items || []
   }
 
-  async createEvent(event: CalendarEvent): Promise<string> {
-    try {
-      this.ensureAuthenticated()
-      
-      const response = await window.gapi.client.calendar.events.insert({
-        calendarId: CALENDAR_ID,
-        resource: event
-      })
+  async createEvent(accessToken: string | null, event: CalendarEvent): Promise<string> {
+    this.checkToken(accessToken)
+    
+    const data = await googleApiRequest(
+      `${GOOGLE_API_BASE_URL}/calendars/${CALENDAR_ID}/events`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify(event),
+      }
+    )
 
-      return response.result.id
-    } catch (error) {
-      console.error('Erro ao criar evento no Google Calendar:', error)
-      throw error
-    }
+    return data.id
   }
 
-  async updateEvent(eventId: string, event: Partial<CalendarEvent>): Promise<void> {
-    try {
-      this.ensureAuthenticated()
-      
-      await window.gapi.client.calendar.events.patch({
-        calendarId: CALENDAR_ID,
-        eventId: eventId,
-        resource: event
-      })
-    } catch (error) {
-      console.error('Erro ao atualizar evento no Google Calendar:', error)
-      throw error
-    }
+  async updateEvent(accessToken: string | null, eventId: string, event: Partial<CalendarEvent>): Promise<void> {
+    this.checkToken(accessToken)
+    
+    await googleApiRequest(
+      `${GOOGLE_API_BASE_URL}/calendars/${CALENDAR_ID}/events/${eventId}`,
+      accessToken,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(event),
+      }
+    )
   }
 
-  async deleteEvent(eventId: string): Promise<void> {
-    try {
-      this.ensureAuthenticated()
-      
-      await window.gapi.client.calendar.events.delete({
-        calendarId: CALENDAR_ID,
-        eventId: eventId
-      })
-    } catch (error) {
-      console.error('Erro ao deletar evento no Google Calendar:', error)
-      throw error
-    }
+  async deleteEvent(accessToken: string | null, eventId: string): Promise<void> {
+    this.checkToken(accessToken)
+    
+    await googleApiRequest(
+      `${GOOGLE_API_BASE_URL}/calendars/${CALENDAR_ID}/events/${eventId}`,
+      accessToken,
+      {
+        method: 'DELETE',
+      }
+    )
   }
 
   convertToAppointment(event: GoogleCalendarEvent, doctorEmail: string): Appointment {
