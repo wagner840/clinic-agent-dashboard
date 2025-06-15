@@ -7,7 +7,7 @@ interface AppointmentOperations {
   rescheduleAppointment: (id: string, newStart: Date, newEnd: Date) => Promise<void>
   cancelAppointment: (id: string) => Promise<void>
   reactivateAppointment: (id: string) => Promise<void>
-  addAppointment: (appointmentData: any) => Promise<void>
+  addAppointment: (appointmentData: any) => Promise<string>
   markAsCompleted: (id: string) => Promise<void>
 }
 
@@ -82,17 +82,19 @@ export function useAppointmentHandlers(operations: AppointmentOperations) {
 
   const handleAddAppointment = useCallback(async (appointmentData: any) => {
     try {
-      await operations.addAppointment(appointmentData)
+      const eventId = await operations.addAppointment(appointmentData)
       toast({
         title: "Criado",
         description: "Agendamento criado com sucesso!",
       })
+      return eventId
     } catch (error) {
       toast({
         title: "Erro",
         description: "Erro ao criar agendamento.",
         variant: "destructive"
       })
+      throw error
     }
   }, [operations.addAppointment, toast])
 
