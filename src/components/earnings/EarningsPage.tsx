@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { useDoctorEarnings } from '@/hooks/useDoctorEarnings'
 import { DoctorEarningsTable } from './DoctorEarningsTable'
 import { ClinicTotalCard } from './ClinicTotalCard'
+import { HistoricalRecalculationButton } from './HistoricalRecalculationButton'
 import { Button } from '@/components/ui/button'
 import { RefreshCw, TrendingUp } from 'lucide-react'
 
@@ -37,10 +38,13 @@ export function EarningsPage() {
             Acompanhe os ganhos por médico e totais da clínica
           </p>
         </div>
-        <Button onClick={handleRefresh} disabled={loading} variant="outline">
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Atualizar
-        </Button>
+        <div className="flex items-center space-x-3">
+          <HistoricalRecalculationButton />
+          <Button onClick={handleRefresh} disabled={loading} variant="outline">
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
+        </div>
       </div>
 
       {/* Totais da Clínica */}
