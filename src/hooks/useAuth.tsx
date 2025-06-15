@@ -2,6 +2,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import { cleanupAuthState } from '@/lib/authUtils'
 
 interface AuthContextType {
   user: User | null
@@ -37,16 +38,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signIn = async (email: string, password: string) => {
+    cleanupAuthState();
+    try {
+      await supabase.auth.signOut({ scope: 'global' });
+    } catch (err) {
+      console.warn('Pre-signin global signout failed. This is expected if no user was logged in.', err);
+    }
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
   }
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
+    cleanupAuthState();
+    const { error } = await supabase.auth.signOut({ scope: 'global' })
+    if (error) {
+      console.error('Error signing out:', error)
+      // We don't throw an error because the local state is cleared anyway.
+    }
   }
 
   const signInWithGoogle = async (options?: { switchAccount?: boolean }) => {
+    cleanupAuthState();
+    try {
+      await supabase.auth.signOut({ scope: 'global' });
+    } catch (err) {
+      console.warn('Pre-Google-signin global signout failed. This is expected if no user was logged in.', err);
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
