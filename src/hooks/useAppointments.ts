@@ -5,31 +5,35 @@ import { useAppointmentOperations } from './appointments/useAppointmentOperation
 import { useAppointmentFilters } from './appointments/useAppointmentFilters'
 
 export function useAppointments(accessToken: string | null, isGoogleSignedIn: boolean) {
+  // Always call hooks in the same order
   const { user } = useAuth()
 
+  const appointmentDataResult = useAppointmentData(accessToken, user, isGoogleSignedIn)
   const {
     appointments,
     loading,
     error,
     clearError,
     fetchAppointments
-  } = useAppointmentData(accessToken, user, isGoogleSignedIn)
+  } = appointmentDataResult
 
+  const appointmentOperations = useAppointmentOperations(accessToken, user, fetchAppointments)
   const {
     rescheduleAppointment,
     cancelAppointment,
     reactivateAppointment,
     addAppointment,
     markAsCompleted
-  } = useAppointmentOperations(accessToken, user, fetchAppointments)
+  } = appointmentOperations
 
+  const appointmentFilters = useAppointmentFilters(appointments)
   const {
     todayAppointments,
     upcomingAppointments,
     pastAppointments,
     completedAppointments,
     cancelledAppointments
-  } = useAppointmentFilters(appointments)
+  } = appointmentFilters
 
   return {
     appointments,

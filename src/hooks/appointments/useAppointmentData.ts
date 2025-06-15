@@ -4,7 +4,6 @@ import { Appointment } from '@/types/appointment'
 import { GoogleCalendarService } from '@/services/googleCalendar'
 import { supabase } from '@/integrations/supabase/client'
 import { TARGET_CALENDAR_IDS } from '@/constants/appointments'
-import { createTestAppointments, logTestAppointmentDetails } from '@/utils/testAppointments'
 
 const calendarService = new GoogleCalendarService()
 
@@ -25,7 +24,7 @@ export function useAppointmentData(
 
     try {
       const { error } = await supabase
-        .from('appointments' as any)
+        .from('appointments')
         .upsert({
           id: appointment.id,
           user_id: user.id,
@@ -56,10 +55,14 @@ export function useAppointmentData(
   }, [user])
 
   const fetchAppointments = useCallback(async () => {
-    if (!accessToken || !user || !isGoogleSignedIn) {
-      if (isGoogleSignedIn) {
-        console.log('Não é possível buscar agendamentos - token ou usuário ausente')
-      }
+    // Handle cases where we shouldn't fetch
+    if (!isGoogleSignedIn) {
+      setAppointments([])
+      return
+    }
+
+    if (!accessToken || !user) {
+      console.log('Não é possível buscar agendamentos - token ou usuário ausente')
       setAppointments([])
       return
     }
@@ -71,6 +74,8 @@ export function useAppointmentData(
     // Use test data if enabled
     if (USE_TEST_DATA) {
       console.log('🧪 Using test appointment data')
+      // Import test data dynamically to avoid circular dependencies
+      const { logTestAppointmentDetails } = await import('@/utils/testAppointments')
       const testAppointments = logTestAppointmentDetails()
       setAppointments(testAppointments)
       setLoading(false)
@@ -127,7 +132,7 @@ export function useAppointmentData(
 
       // Fetch status updates from Supabase
       const { data: supabaseAppointments, error: supabaseError } = await supabase
-        .from('appointments' as any)
+        .from('appointments')
         .select('id, status')
         .eq('user_id', user.id)
 
@@ -176,12 +181,8 @@ export function useAppointmentData(
   }, [accessToken, user, isGoogleSignedIn, syncAppointmentToSupabase])
 
   useEffect(() => {
-    if (isGoogleSignedIn) {
-      fetchAppointments()
-    } else {
-      setAppointments([])
-    }
-  }, [isGoogleSignedIn, fetchAppointments])
+    fetchAppointments()
+  }, [fetchAppointments])
 
   const clearError = useCallback(() => setError(null), [])
 

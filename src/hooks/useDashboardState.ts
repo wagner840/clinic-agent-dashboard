@@ -9,9 +9,11 @@ export function useDashboardState() {
   const [paymentAppointment, setPaymentAppointment] = useState<Appointment | null>(null)
   const { toast } = useToast()
 
-  const { 
-    loading: authLoading, 
-    error: authError, 
+  // Always call hooks in the same order - no conditional calls
+  const googleAuthResult = useGoogleAuth()
+  const {
+    loading: authLoading,
+    error: authError,
     isGoogleInitialized,
     isGoogleSignedIn,
     googleSignIn,
@@ -20,8 +22,10 @@ export function useDashboardState() {
     googleProfile,
     accessToken,
     clearError: clearAuthError
-  } = useGoogleAuth()
+  } = googleAuthResult
 
+  // Always call useAppointments - it handles its own conditional logic internally
+  const appointmentsResult = useAppointments(accessToken, isGoogleSignedIn)
   const {
     appointments,
     loading: appointmentsLoading,
@@ -38,8 +42,9 @@ export function useDashboardState() {
     reactivateAppointment,
     addAppointment,
     markAsCompleted
-  } = useAppointments(accessToken, isGoogleSignedIn)
+  } = appointmentsResult
 
+  // Compute derived state
   const loading = authLoading || (isGoogleSignedIn && appointmentsLoading)
   const error = authError || appointmentsError
   
