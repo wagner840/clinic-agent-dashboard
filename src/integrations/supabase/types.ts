@@ -63,6 +63,105 @@ export type Database = {
         }
         Relationships: []
       }
+      doctor_daily_earnings: {
+        Row: {
+          created_at: string
+          date: string
+          doctor_email: string
+          doctor_name: string
+          id: string
+          insurance_amount: number
+          insurance_appointments: number
+          private_amount: number
+          private_appointments: number
+          total_amount: number
+          total_appointments: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          doctor_email: string
+          doctor_name: string
+          id?: string
+          insurance_amount?: number
+          insurance_appointments?: number
+          private_amount?: number
+          private_appointments?: number
+          total_amount?: number
+          total_appointments?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          doctor_email?: string
+          doctor_name?: string
+          id?: string
+          insurance_amount?: number
+          insurance_appointments?: number
+          private_amount?: number
+          private_appointments?: number
+          total_amount?: number
+          total_appointments?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      doctor_total_earnings: {
+        Row: {
+          created_at: string
+          doctor_email: string
+          doctor_name: string
+          first_appointment_date: string | null
+          id: string
+          insurance_amount: number
+          insurance_appointments: number
+          last_appointment_date: string | null
+          private_amount: number
+          private_appointments: number
+          total_amount: number
+          total_appointments: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_email: string
+          doctor_name: string
+          first_appointment_date?: string | null
+          id?: string
+          insurance_amount?: number
+          insurance_appointments?: number
+          last_appointment_date?: string | null
+          private_amount?: number
+          private_appointments?: number
+          total_amount?: number
+          total_appointments?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          doctor_email?: string
+          doctor_name?: string
+          first_appointment_date?: string | null
+          id?: string
+          insurance_amount?: number
+          insurance_appointments?: number
+          last_appointment_date?: string | null
+          private_amount?: number
+          private_appointments?: number
+          total_amount?: number
+          total_appointments?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       n8n_fila_mensagens: {
         Row: {
           id: number

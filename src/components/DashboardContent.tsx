@@ -6,12 +6,16 @@ import { AppointmentsSection } from '@/components/AppointmentsSection'
 import { PastAppointmentsTable } from '@/components/PastAppointmentsTable'
 import { CompletedAppointmentsTable } from '@/components/CompletedAppointmentsTable'
 import { PaymentDialog } from '@/components/PaymentDialog'
+import { EarningsPage } from '@/components/earnings/EarningsPage'
 import { Appointment } from '@/types/appointment'
 import { CalendarListEntry } from '@/services/googleCalendar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { SettingsSheet } from './SettingsSheet'
-import { useMemo } from 'react'
+import { Button } from '@/components/ui/button'
+import { useMemo, useState, useEffect } from 'react'
+import { TrendingUp } from 'lucide-react'
+import { useDoctorEarnings } from '@/hooks/useDoctorEarnings'
 
 interface DashboardContentProps {
   isGoogleInitialized: boolean
@@ -90,6 +94,18 @@ export function DashboardContent({
   isSettingsOpen,
   onSettingsChange
 }: DashboardContentProps) {
+  const [showEarnings, setShowEarnings] = useState(false)
+  const { getClinicTotals, fetchTotalEarnings } = useDoctorEarnings()
+
+  // Load earnings when component mounts and user is signed in
+  useEffect(() => {
+    if (isGoogleSignedIn) {
+      fetchTotalEarnings()
+    }
+  }, [isGoogleSignedIn, fetchTotalEarnings])
+
+  const clinicTotals = getClinicTotals()
+
   // Filtrar calendários para remover "Holidays in Brazil" do seletor de médicos
   const doctorCalendarsForFilter = useMemo(() => {
     return doctorCalendars.filter(cal => 
@@ -97,6 +113,36 @@ export function DashboardContent({
       !cal.summary?.toLowerCase().includes('feriado')
     )
   }, [doctorCalendars])
+
+  if (showEarnings) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <DashboardHeader
+          isGoogleInitialized={isGoogleInitialized}
+          isGoogleSignedIn={isGoogleSignedIn}
+          loading={loading}
+          onGoogleAuth={onGoogleAuth}
+          onSwitchAccount={onSwitchAccount}
+          onSyncAppointments={onSyncAppointments}
+          currentGoogleUser={currentGoogleUser}
+          onOpenSettings={() => onSettingsChange(true)}
+        />
+
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+          <div className="mb-6">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowEarnings(false)}
+              className="mb-4"
+            >
+              ← Voltar ao Dashboard
+            </Button>
+          </div>
+          <EarningsPage />
+        </main>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -125,7 +171,7 @@ export function DashboardContent({
 
         <div className="space-y-6 sm:space-y-8">
           {isGoogleSignedIn && doctorCalendarsForFilter.length > 0 && (
-            <div className="flex justify-start">
+            <div className="flex justify-between items-center">
               <div className="space-y-2">
                 <Label htmlFor="doctor-filter">Filtrar por Médico</Label>
                 <Select value={doctorFilter} onValueChange={onDoctorFilterChange}>
@@ -142,6 +188,16 @@ export function DashboardContent({
                   </SelectContent>
                 </Select>
               </div>
+
+              {isGoogleSignedIn && (
+                <Button 
+                  onClick={() => setShowEarnings(true)}
+                  className="flex items-center space-x-2"
+                >
+                  <TrendingUp className="h-4 w-4" />
+                  <span>Ver Relatório de Ganhos</span>
+                </Button>
+              )}
             </div>
           )}
 
@@ -149,6 +205,7 @@ export function DashboardContent({
             totalAppointments={appointments.length}
             todayAppointments={todayAppointments.length}
             upcomingAppointments={upcomingAppointments.length}
+            clinicTotalEarnings={clinicTotals.totalAmount}
           />
 
           <AppointmentsSection

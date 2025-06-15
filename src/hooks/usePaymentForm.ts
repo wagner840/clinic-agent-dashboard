@@ -4,10 +4,12 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { Appointment } from '@/types/appointment'
 import { useToast } from "@/hooks/use-toast"
+import { useDoctorEarnings } from '@/hooks/useDoctorEarnings'
 
 export function usePaymentForm() {
   const { user } = useAuth()
   const { toast } = useToast()
+  const { calculateAndSaveEarnings } = useDoctorEarnings()
   const [amount, setAmount] = useState('')
   const [isInsurance, setIsInsurance] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -59,9 +61,12 @@ export function usePaymentForm() {
         }
       } else {
         console.log('✅ Payment saved successfully for appointment:', appointment.id)
+        
+        // 2. Calcular e salvar ganhos do médico
+        await calculateAndSaveEarnings(appointment, parseFloat(amount), isInsurance)
       }
 
-      // 2. Marcar o agendamento como concluído no Supabase
+      // 3. Marcar o agendamento como concluído no Supabase
       const { error: appointmentError } = await supabase
         .from('appointments')
         .update({ status: 'completed' })
