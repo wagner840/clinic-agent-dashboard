@@ -92,7 +92,10 @@ export function useGoogleAuth() {
   const googleSignIn = useCallback(async () => {
     if (googleAuth) {
       try {
-        await googleAuth.signIn()
+        // Força a seleção de conta e solicita novos tokens
+        await googleAuth.signIn({
+          prompt: 'select_account'
+        })
         setError(null)
       } catch (err: any) {
         console.error("Erro ao fazer login com Google:", err)
@@ -117,6 +120,27 @@ export function useGoogleAuth() {
     }
   }, [googleAuth])
 
+  const googleSwitchAccount = useCallback(async () => {
+    if (googleAuth) {
+      try {
+        // Primeiro faz logout
+        await googleAuth.signOut()
+        // Depois faz login com prompt de seleção de conta
+        await googleAuth.signIn({
+          prompt: 'select_account'
+        })
+        setError(null)
+      } catch (err: any) {
+        console.error("Erro ao trocar conta do Google:", err)
+        if (err.error === 'popup_closed_by_user') {
+          setError("A janela de login do Google foi fechada antes da conclusão.")
+        } else {
+          setError("Ocorreu um erro ao tentar trocar a conta do Google.")
+        }
+      }
+    }
+  }, [googleAuth])
+
   return {
     loading,
     error,
@@ -127,6 +151,6 @@ export function useGoogleAuth() {
     googleProfile,
     googleSignIn,
     googleSignOut,
-    googleSwitchAccount: googleSignIn,
+    googleSwitchAccount,
   }
 }
