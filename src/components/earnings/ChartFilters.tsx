@@ -63,21 +63,21 @@ export function ChartFilters({ onFiltersChange }: ChartFiltersProps) {
   }
 
   return (
-    <Card className="mb-4">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
+    <Card className="mb-4 mx-2 sm:mx-0">
+      <CardHeader className="pb-2 px-3 sm:px-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <CardTitle className="text-sm flex items-center space-x-2">
             <Filter className="h-4 w-4" />
             <span>Filtros Avançados</span>
             {hasActiveFilters && (
-              <Badge variant="secondary" className="ml-2">
+              <Badge variant="secondary" className="ml-2 text-xs">
                 {Object.values(filters).filter(v => v !== 'all').length}
               </Badge>
             )}
           </CardTitle>
           <div className="flex items-center space-x-2">
             {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs">
                 <X className="h-3 w-3 mr-1" />
                 Limpar
               </Button>
@@ -86,6 +86,7 @@ export function ChartFilters({ onFiltersChange }: ChartFiltersProps) {
               variant="ghost" 
               size="sm" 
               onClick={() => setIsExpanded(!isExpanded)}
+              className="text-xs"
             >
               {isExpanded ? 'Ocultar' : 'Mostrar'}
             </Button>
@@ -94,12 +95,12 @@ export function ChartFilters({ onFiltersChange }: ChartFiltersProps) {
       </CardHeader>
 
       {isExpanded && (
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <CardContent className="space-y-4 px-3 sm:px-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground">Período</label>
               <Select value={filters.timeRange} onValueChange={(value) => updateFilter('timeRange', value as any)}>
-                <SelectTrigger>
+                <SelectTrigger className="text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -115,12 +116,12 @@ export function ChartFilters({ onFiltersChange }: ChartFiltersProps) {
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground">Dia da Semana</label>
               <Select value={filters.dayOfWeek} onValueChange={(value) => updateFilter('dayOfWeek', value as any)}>
-                <SelectTrigger>
+                <SelectTrigger className="text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(dayLabels).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                    <SelectItem key={value} value={value} className="text-xs">{label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -129,12 +130,12 @@ export function ChartFilters({ onFiltersChange }: ChartFiltersProps) {
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground">Mês</label>
               <Select value={filters.month} onValueChange={(value) => updateFilter('month', value as any)}>
-                <SelectTrigger>
+                <SelectTrigger className="text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(monthLabels).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                    <SelectItem key={value} value={value} className="text-xs">{label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -143,7 +144,7 @@ export function ChartFilters({ onFiltersChange }: ChartFiltersProps) {
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground">Ano</label>
               <Select value={filters.year} onValueChange={(value) => updateFilter('year', value as any)}>
-                <SelectTrigger>
+                <SelectTrigger className="text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
