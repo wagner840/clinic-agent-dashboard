@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react'
 import { Appointment } from '@/types/appointment'
 import { GoogleCalendarService } from '@/services/googleCalendar'
@@ -98,24 +99,8 @@ export function useAppointments(accessToken: string | null, isGoogleSignedIn: bo
     if (!accessToken || !user) return
 
     try {
-      const allCalendars = await calendarService.fetchCalendarList(accessToken)
-      const targetCalendars = allCalendars.filter(cal => TARGET_CALENDAR_IDS.includes(cal.id))
-
-      // Tentar reagendar em cada calendário alvo até encontrar o evento
-      for (const calendar of targetCalendars) {
-        try {
-          await calendarService.rescheduleAppointment(accessToken, calendar.id, eventId, newStart, newEnd)
-          await fetchAppointments() // Refresh appointments
-          return
-        } catch (error: any) {
-          if (!error.message.includes('404')) {
-            throw error
-          }
-          // Continue para o próximo calendário se o evento não foi encontrado
-        }
-      }
-
-      throw new Error('Evento não encontrado em nenhum calendário')
+      await calendarService.rescheduleAppointment(accessToken, TARGET_CALENDAR_IDS, eventId, newStart, newEnd)
+      await fetchAppointments() // Refresh appointments
     } catch (error: any) {
       console.error('Error rescheduling appointment:', error)
       setError(`Erro ao reagendar: ${error.message}`)
@@ -127,22 +112,8 @@ export function useAppointments(accessToken: string | null, isGoogleSignedIn: bo
     if (!accessToken || !user) return
 
     try {
-      const allCalendars = await calendarService.fetchCalendarList(accessToken)
-      const targetCalendars = allCalendars.filter(cal => TARGET_CALENDAR_IDS.includes(cal.id))
-
-      for (const calendar of targetCalendars) {
-        try {
-          await calendarService.cancelAppointment(accessToken, calendar.id, eventId)
-          await fetchAppointments()
-          return
-        } catch (error: any) {
-          if (!error.message.includes('404')) {
-            throw error
-          }
-        }
-      }
-
-      throw new Error('Evento não encontrado em nenhum calendário')
+      await calendarService.cancelAppointment(accessToken, TARGET_CALENDAR_IDS, eventId)
+      await fetchAppointments()
     } catch (error: any) {
       console.error('Error cancelling appointment:', error)
       setError(`Erro ao cancelar: ${error.message}`)
@@ -154,22 +125,8 @@ export function useAppointments(accessToken: string | null, isGoogleSignedIn: bo
     if (!accessToken || !user) return
 
     try {
-      const allCalendars = await calendarService.fetchCalendarList(accessToken)
-      const targetCalendars = allCalendars.filter(cal => TARGET_CALENDAR_IDS.includes(cal.id))
-
-      for (const calendar of targetCalendars) {
-        try {
-          await calendarService.reactivateAppointment(accessToken, calendar.id, eventId)
-          await fetchAppointments()
-          return
-        } catch (error: any) {
-          if (!error.message.includes('404')) {
-            throw error
-          }
-        }
-      }
-
-      throw new Error('Evento não encontrado em nenhum calendário')
+      await calendarService.reactivateAppointment(accessToken, TARGET_CALENDAR_IDS, eventId)
+      await fetchAppointments()
     } catch (error: any) {
       console.error('Error reactivating appointment:', error)
       setError(`Erro ao reativar: ${error.message}`)

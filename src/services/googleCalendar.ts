@@ -147,6 +147,30 @@ export class GoogleCalendarService {
     )
   }
 
+  async findEventInCalendars(accessToken: string | null, eventId: string, calendarIds: string[]): Promise<{ calendar: string; event: CalendarEvent } | null> {
+    this.checkToken(accessToken)
+    
+    console.log(`Searching for event ${eventId} in ${calendarIds.length} calendars`)
+    
+    for (const calendarId of calendarIds) {
+      try {
+        const url = `${GOOGLE_API_BASE_URL}/calendars/${encodeURIComponent(calendarId)}/events/${eventId}`
+        const event = await googleApiRequest(url, accessToken)
+        console.log(`Event ${eventId} found in calendar ${calendarId}`)
+        return { calendar: calendarId, event }
+      } catch (error: any) {
+        if (error.message.includes('404') || error.message.includes('Not Found')) {
+          console.log(`Event ${eventId} not found in calendar ${calendarId}`)
+          continue
+        }
+        throw error
+      }
+    }
+    
+    console.log(`Event ${eventId} not found in any calendar`)
+    return null
+  }
+
   async createAppointment(accessToken: string | null, calendarId: string, appointmentData: {
     patientName: string
     patientEmail?: string
@@ -182,7 +206,13 @@ export class GoogleCalendarService {
     return this.createEvent(accessToken, calendarId, event)
   }
 
-  async rescheduleAppointment(accessToken: string | null, calendarId: string, eventId: string, newStart: Date, newEnd: Date): Promise<void> {
+  async rescheduleAppointment(accessToken: string | null, calendarIds: string[], eventId: string, newStart: Date, newEnd: Date): Promise<void> {
+    const eventInfo = await this.findEventInCalendars(accessToken, eventId, calendarIds)
+    
+    if (!eventInfo) {
+      throw new Error('Evento não encontrado em nenhum calendário')
+    }
+
     const updateData = {
       start: {
         dateTime: newStart.toISOString(),
@@ -192,15 +222,30 @@ export class GoogleCalendarService {
       }
     }
 
-    await this.updateEvent(accessToken, calendarId, eventId, updateData)
+    await this.updateEvent(accessToken, eventInfo.calendar, eventId, updateData)
+    console.log(`Event ${eventId} rescheduled successfully in calendar ${eventInfo.calendar}`)
   }
 
-  async cancelAppointment(accessToken: string | null, calendarId: string, eventId: string): Promise<void> {
-    await this.updateEvent(accessToken, calendarId, eventId, { status: 'cancelled' })
+  async cancelAppointment(accessToken: string | null, calendarIds: string[], eventId: string): Promise<void> {
+    const eventInfo = await this.findEventInCalendars(accessToken, eventId, calendarIds)
+    
+    if (!eventInfo) {
+      throw new Error('Evento não encontrado em nenhum calendário')
+    }
+
+    await this.updateEvent(accessToken, eventInfo.calendar, eventId, { status: 'cancelled' })
+    console.log(`Event ${eventId} cancelled successfully in calendar ${eventInfo.calendar}`)
   }
 
-  async reactivateAppointment(accessToken: string | null, calendarId: string, eventId: string): Promise<void> {
-    await this.updateEvent(accessToken, calendarId, eventId, { status: 'confirmed' })
+  async reactivateAppointment(accessToken: string | null, calendarIds: string[], eventId: string): Promise<void> {
+    const eventInfo = await this.findEventInCalendars(accessToken, eventId, calendarIds)
+    
+    if (!eventInfo) {
+      throw new Error('Evento não encontrado em nenhum calendário')
+    }
+
+    await this.updateEvent(accessToken, eventInfo.calendar, eventId, { status: 'confirmed' })
+    console.log(`Event ${eventId} reactivated successfully in calendar ${eventInfo.calendar}`)
   }
 
   private buildEventDescription(appointmentData: {
@@ -282,6 +327,3 @@ export class GoogleCalendarService {
     return match ? match[1].trim() : undefined
   }
 }
-
-// Removing the global type declaration for 'gapi' as it conflicts with
-// the more specific types provided by @types/gapi.client and @types/gapi.auth2.
