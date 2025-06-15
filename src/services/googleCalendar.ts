@@ -1,3 +1,4 @@
+
 import { CalendarEvent, Appointment } from '@/types/appointment'
 
 const GOOGLE_API_BASE_URL = 'https://www.googleapis.com/calendar/v3'
@@ -158,7 +159,7 @@ export class GoogleCalendarService {
     const typeLabels = {
       consultation: 'Consulta',
       procedure: 'Procedimento',
-      follow-up: 'Retorno'
+      'follow-up': 'Retorno'
     }
 
     const event: CalendarEvent = {
