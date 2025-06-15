@@ -56,12 +56,12 @@ export function useGoogleCalendarReal() {
 
   useEffect(() => {
     const initClient = () => {
-      gapi.client.init({
+      window.gapi.client.init({
         clientId: GOOGLE_CLIENT_ID,
         scope: GOOGLE_CALENDAR_SCOPES,
         discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest']
       }).then(() => {
-        const authInstance = gapi.auth2.getAuthInstance()
+        const authInstance = window.gapi.auth2.getAuthInstance()
         setGoogleAuth(authInstance)
         setIsGoogleInitialized(true)
         

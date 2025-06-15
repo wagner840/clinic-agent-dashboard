@@ -1,4 +1,3 @@
-
 import { CalendarEvent, Appointment } from '@/types/appointment'
 
 const CALENDAR_ID = 'primary'
@@ -190,9 +189,5 @@ export class GoogleCalendarService {
   }
 }
 
-// Tipos globais para a API do Google
-declare global {
-  interface Window {
-    gapi: any
-  }
-}
+// Removing the global type declaration for 'gapi' as it conflicts with
+// the more specific types provided by @types/gapi.client and @types/gapi.auth2.
