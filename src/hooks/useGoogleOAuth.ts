@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 
 const GOOGLE_CLIENT_ID = '334488532936-0s8r9hp9l50cr5u34vk4ujk2v6ujm6v0.apps.googleusercontent.com'
@@ -80,10 +81,12 @@ export function useGoogleOAuth() {
 
     } catch (error: any) {
       console.error('Erro ao inicializar Google API:', error)
+      const details = error.details ? `${error.details}` : ''
+      const errorMessage = error.error || error.message || 'Erro desconhecido.'
       setAuthState(prev => ({
         ...prev,
         isInitialized: true,
-        error: error.message || 'Erro ao inicializar Google API'
+        error: `Falha na API Google: ${errorMessage} ${details}`.trim()
       }))
     }
   }
@@ -126,9 +129,16 @@ export function useGoogleOAuth() {
       
     } catch (error: any) {
       console.error('Erro no login Google:', error)
+      if (error.error === 'popup_closed_by_user') {
+        console.log('Janela de login do Google fechada pelo usuário.')
+        clearError() // Limpa erro anterior, se houver
+        return
+      }
+      const details = error.details ? `${error.details}` : ''
+      const errorMessage = error.error || error.message || 'Erro desconhecido.'
       setAuthState(prev => ({
         ...prev,
-        error: error.message || 'Erro no login'
+        error: `Erro de login: ${errorMessage} ${details}`.trim()
       }))
     }
   }
@@ -150,9 +160,10 @@ export function useGoogleOAuth() {
       console.log('Usuário desconectado com sucesso')
     } catch (error: any) {
       console.error('Erro no logout Google:', error)
+      const errorMessage = error.error || error.message || 'Erro desconhecido.'
       setAuthState(prev => ({
         ...prev,
-        error: error.message || 'Erro no logout'
+        error: `Erro no logout: ${errorMessage}`
       }))
     }
   }
@@ -184,9 +195,10 @@ export function useGoogleOAuth() {
       }))
     } catch (error: any) {
       console.error('Erro ao desconectar Google:', error)
+      const errorMessage = error.error || error.message || 'Erro desconhecido.'
       setAuthState(prev => ({
         ...prev,
-        error: error.message || 'Erro ao desconectar'
+        error: `Erro ao revogar acesso: ${errorMessage}`
       }))
     }
   }
@@ -200,9 +212,10 @@ export function useGoogleOAuth() {
       
     } catch (error: any) {
       console.error('Erro ao trocar conta:', error)
+      const errorMessage = error.error || error.message || 'Erro desconhecido.'
       setAuthState(prev => ({
         ...prev,
-        error: error.message || 'Erro ao trocar conta'
+        error: `Erro ao trocar de conta: ${errorMessage}`
       }))
     }
   }
@@ -232,9 +245,10 @@ export function useGoogleOAuth() {
       
     } catch (error: any) {
       console.error('Erro ao forçar seleção de conta:', error)
+      const errorMessage = error.error || error.message || 'Erro desconhecido.'
       setAuthState(prev => ({
         ...prev,
-        error: error.message || 'Erro ao forçar seleção de conta'
+        error: `Erro ao selecionar conta: ${errorMessage}`
       }))
     }
   }
