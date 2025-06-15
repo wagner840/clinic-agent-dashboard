@@ -1,5 +1,4 @@
-
-import { Activity, RefreshCw, Users, LogOut, Calendar, UserCheck } from 'lucide-react'
+import { Activity, RefreshCw, Users, LogOut, Calendar, UserCheck, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -22,6 +21,7 @@ interface DashboardHeaderProps {
     name: string
     imageUrl: string
   } | null
+  onOpenSettings: () => void
 }
 
 export function DashboardHeader({
@@ -31,35 +31,36 @@ export function DashboardHeader({
   onGoogleAuth,
   onSwitchAccount,
   onSyncAppointments,
-  currentGoogleUser
+  currentGoogleUser,
+  onOpenSettings
 }: DashboardHeaderProps) {
   const { user, signOut } = useAuth()
 
   return (
     <TooltipProvider>
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-background shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <Activity className="h-8 w-8 text-blue-600" />
+              <Activity className="h-8 w-8 text-primary" />
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">
+                <h1 className="text-xl font-semibold text-foreground">
                   Dashboard Médico
                 </h1>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Sistema de Gestão de Consultas
                 </p>
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
               {/* Informações do usuário */}
               <div className="text-right">
-                <div className="text-sm font-medium text-gray-900">
+                <div className="text-sm font-medium text-foreground">
                   Dr(a). {user?.email?.split('@')[0]}
                 </div>
                 {isGoogleSignedIn && currentGoogleUser && (
-                  <div className="text-xs text-green-600 flex items-center space-x-1">
+                  <div className="text-xs text-green-600 flex items-center justify-center space-x-1">
                     <UserCheck className="h-3 w-3" />
                     <span>Google conectado</span>
                   </div>
@@ -137,16 +138,31 @@ export function DashboardHeader({
                 </div>
               )}
 
+              {/* Botão de configurações */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    onClick={onOpenSettings}
+                    size="icon"
+                  >
+                    <Settings className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Configurações</p>
+                </TooltipContent>
+              </Tooltip>
+
               {/* Botão sair */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button 
                     variant="ghost" 
                     onClick={signOut}
-                    size="sm"
-                    className="text-gray-600 hover:text-gray-900"
+                    size="icon"
                   >
-                    <LogOut className="h-4 w-4" />
+                    <LogOut className="h-5 w-5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>

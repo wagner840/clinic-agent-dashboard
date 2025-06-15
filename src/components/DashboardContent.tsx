@@ -9,6 +9,7 @@ import { Appointment } from '@/types/appointment'
 import { CalendarListEntry } from '@/services/googleCalendar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
+import { SettingsSheet } from './SettingsSheet'
 
 interface DashboardContentProps {
   isGoogleInitialized: boolean
@@ -43,6 +44,8 @@ interface DashboardContentProps {
   onCancelAppointment: (appointment: Appointment) => Promise<void>
   onReactivateAppointment: (appointment: Appointment) => Promise<void>
   onAddAppointment: (appointmentData: any, calendarId: string) => Promise<string>
+  isSettingsOpen: boolean
+  onSettingsChange: (isOpen: boolean) => void
 }
 
 export function DashboardContent({
@@ -73,10 +76,12 @@ export function DashboardContent({
   onRescheduleAppointment,
   onCancelAppointment,
   onReactivateAppointment,
-  onAddAppointment
+  onAddAppointment,
+  isSettingsOpen,
+  onSettingsChange
 }: DashboardContentProps) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <DashboardHeader
         isGoogleInitialized={isGoogleInitialized}
         isGoogleSignedIn={isGoogleSignedIn}
@@ -85,6 +90,7 @@ export function DashboardContent({
         onSwitchAccount={onSwitchAccount}
         onSyncAppointments={onSyncAppointments}
         currentGoogleUser={currentGoogleUser}
+        onOpenSettings={() => onSettingsChange(true)}
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
@@ -163,6 +169,12 @@ export function DashboardContent({
         isOpen={!!paymentAppointment}
         onClose={onClosePaymentDialog}
         onPaymentSuccess={onPaymentSuccess}
+      />
+
+      <SettingsSheet
+        isOpen={isSettingsOpen}
+        onOpenChange={onSettingsChange}
+        doctorCalendars={doctorCalendars}
       />
     </div>
   )

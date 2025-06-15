@@ -1,6 +1,9 @@
+
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { DashboardContent } from '@/components/DashboardContent'
 import { useDashboardState } from '@/hooks/useDashboardState'
+import { ThemeProvider } from '@/components/ThemeProvider'
+import { useState } from 'react'
 
 export default function Dashboard() {
   const {
@@ -34,6 +37,8 @@ export default function Dashboard() {
     handleAddAppointment
   } = useDashboardState()
 
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
   console.log('Google Auth and Appointments status:', {
     isGoogleInitialized,
     isGoogleSignedIn,
@@ -48,37 +53,41 @@ export default function Dashboard() {
   })
 
   return (
-    <TooltipProvider>
-      <DashboardContent
-        isGoogleInitialized={isGoogleInitialized}
-        isGoogleSignedIn={isGoogleSignedIn}
-        loading={loading}
-        error={error}
-        currentGoogleUser={currentGoogleUser}
-        appointments={appointments}
-        doctorCalendars={doctorCalendars}
-        doctorFilter={doctorFilter}
-        onDoctorFilterChange={setDoctorFilter}
-        todayAppointments={todayAppointments}
-        upcomingAppointments={upcomingAppointments}
-        pastAppointments={pastAppointments}
-        completedAppointments={completedAppointments}
-        cancelledAppointments={cancelledAppointments}
-        paymentAppointment={paymentAppointment}
-        onGoogleAuth={handleGoogleAuth}
-        onSwitchAccount={handleSwitchAccount}
-        onSyncAppointments={fetchAppointments}
-        onGoogleSignIn={googleSignIn}
-        onMarkAsCompleted={handleMarkAsCompleted}
-        onRetry={handleRetry}
-        onClearError={clearError}
-        onPaymentSuccess={handlePaymentSuccess}
-        onClosePaymentDialog={() => setPaymentAppointment(null)}
-        onRescheduleAppointment={handleRescheduleAppointment}
-        onCancelAppointment={handleCancelAppointment}
-        onReactivateAppointment={handleReactivateAppointment}
-        onAddAppointment={handleAddAppointment}
-      />
-    </TooltipProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <TooltipProvider>
+        <DashboardContent
+          isGoogleInitialized={isGoogleInitialized}
+          isGoogleSignedIn={isGoogleSignedIn}
+          loading={loading}
+          error={error}
+          currentGoogleUser={currentGoogleUser}
+          appointments={appointments}
+          doctorCalendars={doctorCalendars}
+          doctorFilter={doctorFilter}
+          onDoctorFilterChange={setDoctorFilter}
+          todayAppointments={todayAppointments}
+          upcomingAppointments={upcomingAppointments}
+          pastAppointments={pastAppointments}
+          completedAppointments={completedAppointments}
+          cancelledAppointments={cancelledAppointments}
+          paymentAppointment={paymentAppointment}
+          onGoogleAuth={handleGoogleAuth}
+          onSwitchAccount={handleSwitchAccount}
+          onSyncAppointments={fetchAppointments}
+          onGoogleSignIn={googleSignIn}
+          onMarkAsCompleted={handleMarkAsCompleted}
+          onRetry={handleRetry}
+          onClearError={clearError}
+          onPaymentSuccess={handlePaymentSuccess}
+          onClosePaymentDialog={() => setPaymentAppointment(null)}
+          onRescheduleAppointment={handleRescheduleAppointment}
+          onCancelAppointment={handleCancelAppointment}
+          onReactivateAppointment={handleReactivateAppointment}
+          onAddAppointment={handleAddAppointment}
+          isSettingsOpen={isSettingsOpen}
+          onSettingsChange={setIsSettingsOpen}
+        />
+      </TooltipProvider>
+    </ThemeProvider>
   )
 }
