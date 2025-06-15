@@ -1,8 +1,22 @@
-
 import { useState, useEffect, useCallback } from 'react'
 import { gapi } from 'gapi-script'
 import { supabase } from '@/integrations/supabase/client'
 import { GOOGLE_CALENDAR_SCOPES } from '@/lib/google'
+
+// Chaves para localStorage
+const GOOGLE_AUTH_STORAGE_KEY = 'google_auth_state'
+const GOOGLE_USER_STORAGE_KEY = 'google_user_profile'
+
+interface StoredAuthState {
+  isSignedIn: boolean
+  accessToken: string | null
+  userProfile: {
+    email: string
+    name: string
+    imageUrl: string
+  } | null
+  timestamp: number
+}
 
 export function useGoogleAuth() {
   const [googleAuth, setGoogleAuth] = useState<gapi.auth2.GoogleAuth | null>(null)
@@ -13,6 +27,65 @@ export function useGoogleAuth() {
   const [error, setError] = useState<string | null>(null)
   const [googleClientId, setGoogleClientId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Função para salvar estado no localStorage
+  const saveAuthState = useCallback((
+    signedIn: boolean, 
+    token: string | null, 
+    profile: gapi.auth2.BasicProfile | null
+  ) => {
+    try {
+      const authState: StoredAuthState = {
+        isSignedIn: signedIn,
+        accessToken: token,
+        userProfile: profile ? {
+          email: profile.getEmail(),
+          name: profile.getName(),
+          imageUrl: profile.getImageUrl()
+        } : null,
+        timestamp: Date.now()
+      }
+      localStorage.setItem(GOOGLE_AUTH_STORAGE_KEY, JSON.stringify(authState))
+      console.log('✅ Estado do Google Auth salvo no localStorage')
+    } catch (error) {
+      console.warn('⚠️ Erro ao salvar estado no localStorage:', error)
+    }
+  }, [])
+
+  // Função para carregar estado do localStorage
+  const loadSavedAuthState = useCallback(() => {
+    try {
+      const saved = localStorage.getItem(GOOGLE_AUTH_STORAGE_KEY)
+      if (saved) {
+        const authState: StoredAuthState = JSON.parse(saved)
+        const isExpired = Date.now() - authState.timestamp > 24 * 60 * 60 * 1000 // 24 horas
+        
+        if (!isExpired && authState.isSignedIn) {
+          console.log('📱 Estado do Google Auth carregado do localStorage')
+          return authState
+        } else {
+          // Remove estado expirado
+          localStorage.removeItem(GOOGLE_AUTH_STORAGE_KEY)
+          console.log('🗑️ Estado expirado removido do localStorage')
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ Erro ao carregar estado do localStorage:', error)
+      localStorage.removeItem(GOOGLE_AUTH_STORAGE_KEY)
+    }
+    return null
+  }, [])
+
+  // Função para limpar estado salvo
+  const clearSavedAuthState = useCallback(() => {
+    try {
+      localStorage.removeItem(GOOGLE_AUTH_STORAGE_KEY)
+      localStorage.removeItem(GOOGLE_USER_STORAGE_KEY)
+      console.log('🧹 Estado do Google Auth limpo do localStorage')
+    } catch (error) {
+      console.warn('⚠️ Erro ao limpar localStorage:', error)
+    }
+  }, [])
 
   useEffect(() => {
     const fetchGoogleClientId = async () => {
@@ -49,6 +122,9 @@ export function useGoogleAuth() {
       return
     }
 
+    // Carrega estado salvo antes de inicializar
+    const savedState = loadSavedAuthState()
+
     const initClient = () => {
       window.gapi.client.init({
         clientId: googleClientId,
@@ -65,14 +141,30 @@ export function useGoogleAuth() {
           if (signedIn) {
             const currentGoogleUser = authInstance.currentUser.get()
             const authResponse = currentGoogleUser.getAuthResponse(true)
+            const profile = currentGoogleUser.getBasicProfile()
+            
             setAccessToken(authResponse.access_token)
-            setGoogleProfile(currentGoogleUser.getBasicProfile())
-            console.log('Usuário Google conectado.')
+            setGoogleProfile(profile)
+            
+            // Salva o estado atual
+            saveAuthState(true, authResponse.access_token, profile)
+            
+            console.log('✅ Usuário Google conectado e estado salvo.')
           } else {
             setAccessToken(null)
             setGoogleProfile(null)
-            console.log('Usuário Google desconectado.')
+            
+            // Limpa estado salvo
+            clearSavedAuthState()
+            
+            console.log('❌ Usuário Google desconectado e estado limpo.')
           }
+        }
+        
+        // Se temos estado salvo e o Google diz que está logado, restaura
+        if (savedState && authInstance.isSignedIn.get()) {
+          console.log('🔄 Restaurando sessão do Google...')
+          updateSigninStatus(true)
         }
         
         authInstance.isSignedIn.listen(updateSigninStatus)
@@ -87,16 +179,23 @@ export function useGoogleAuth() {
     }
     
     gapi.load('client:auth2', initClient)
-  }, [googleClientId])
+  }, [googleClientId, loadSavedAuthState, saveAuthState, clearSavedAuthState])
 
   const googleSignIn = useCallback(async () => {
     if (googleAuth) {
       try {
         // Força a seleção de conta e solicita novos tokens
-        await googleAuth.signIn({
+        const user = await googleAuth.signIn({
           prompt: 'select_account'
         })
+        
+        // Salva imediatamente após o login bem-sucedido
+        const authResponse = user.getAuthResponse(true)
+        const profile = user.getBasicProfile()
+        saveAuthState(true, authResponse.access_token, profile)
+        
         setError(null)
+        console.log('✅ Login realizado e estado persistido.')
       } catch (err: any) {
         console.error("Erro ao fazer login com Google:", err)
         if (err.error === 'popup_closed_by_user') {
@@ -106,30 +205,41 @@ export function useGoogleAuth() {
         }
       }
     }
-  }, [googleAuth])
+  }, [googleAuth, saveAuthState])
 
   const googleSignOut = useCallback(async () => {
     if (googleAuth) {
       try {
         await googleAuth.signOut()
+        clearSavedAuthState()
         setError(null)
+        console.log('✅ Logout realizado e estado limpo.')
       } catch (err) {
         console.error("Erro ao fazer logout do Google:", err)
         setError("Ocorreu um erro ao fazer logout do Google.")
       }
     }
-  }, [googleAuth])
+  }, [googleAuth, clearSavedAuthState])
 
   const googleSwitchAccount = useCallback(async () => {
     if (googleAuth) {
       try {
-        // Primeiro faz logout
+        // Primeiro faz logout e limpa estado
         await googleAuth.signOut()
+        clearSavedAuthState()
+        
         // Depois faz login com prompt de seleção de conta
-        await googleAuth.signIn({
+        const user = await googleAuth.signIn({
           prompt: 'select_account'
         })
+        
+        // Salva o novo estado
+        const authResponse = user.getAuthResponse(true)
+        const profile = user.getBasicProfile()
+        saveAuthState(true, authResponse.access_token, profile)
+        
         setError(null)
+        console.log('✅ Troca de conta realizada e estado atualizado.')
       } catch (err: any) {
         console.error("Erro ao trocar conta do Google:", err)
         if (err.error === 'popup_closed_by_user') {
@@ -139,7 +249,7 @@ export function useGoogleAuth() {
         }
       }
     }
-  }, [googleAuth])
+  }, [googleAuth, saveAuthState, clearSavedAuthState])
 
   return {
     loading,
