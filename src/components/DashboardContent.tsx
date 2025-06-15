@@ -1,0 +1,106 @@
+
+import { DashboardStats } from '@/components/DashboardStats'
+import { DashboardHeader } from '@/components/DashboardHeader'
+import { GoogleAuthAlerts } from '@/components/GoogleAuthAlerts'
+import { AppointmentsSection } from '@/components/AppointmentsSection'
+import { PaymentDialog } from '@/components/PaymentDialog'
+import { Appointment } from '@/types/appointment'
+
+interface DashboardContentProps {
+  isGoogleInitialized: boolean
+  isGoogleSignedIn: boolean
+  loading: boolean
+  error: string | null
+  currentGoogleUser: {
+    email: string
+    name: string
+    imageUrl: string
+  } | null
+  appointments: Appointment[]
+  todayAppointments: Appointment[]
+  upcomingAppointments: Appointment[]
+  cancelledAppointments: Appointment[]
+  paymentAppointment: Appointment | null
+  onGoogleAuth: () => Promise<void>
+  onSwitchAccount: () => Promise<void>
+  onSyncAppointments: () => Promise<void>
+  onGoogleSignIn: () => Promise<void>
+  onMarkAsCompleted: (appointment: Appointment) => void
+  onRetry: () => Promise<void>
+  onClearError: () => void
+  onPaymentSuccess: () => void
+  onClosePaymentDialog: () => void
+}
+
+export function DashboardContent({
+  isGoogleInitialized,
+  isGoogleSignedIn,
+  loading,
+  error,
+  currentGoogleUser,
+  appointments,
+  todayAppointments,
+  upcomingAppointments,
+  cancelledAppointments,
+  paymentAppointment,
+  onGoogleAuth,
+  onSwitchAccount,
+  onSyncAppointments,
+  onGoogleSignIn,
+  onMarkAsCompleted,
+  onRetry,
+  onClearError,
+  onPaymentSuccess,
+  onClosePaymentDialog
+}: DashboardContentProps) {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <DashboardHeader
+        isGoogleInitialized={isGoogleInitialized}
+        isGoogleSignedIn={isGoogleSignedIn}
+        loading={loading}
+        onGoogleAuth={onGoogleAuth}
+        onSwitchAccount={onSwitchAccount}
+        onSyncAppointments={onSyncAppointments}
+        currentGoogleUser={currentGoogleUser}
+      />
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <GoogleAuthAlerts
+          isGoogleInitialized={isGoogleInitialized}
+          isGoogleSignedIn={isGoogleSignedIn}
+          error={error}
+          onGoogleSignIn={onGoogleSignIn}
+          onRetry={onRetry}
+          onClearError={onClearError}
+          loading={loading}
+          currentGoogleUser={currentGoogleUser}
+        />
+
+        <DashboardStats 
+          totalAppointments={appointments.length}
+          todayAppointments={todayAppointments.length}
+          upcomingAppointments={upcomingAppointments.length}
+        />
+
+        <AppointmentsSection
+          todayAppointments={todayAppointments}
+          upcomingAppointments={upcomingAppointments}
+          cancelledAppointments={cancelledAppointments}
+          isGoogleSignedIn={isGoogleSignedIn}
+          isGoogleInitialized={isGoogleInitialized}
+          loading={loading && isGoogleSignedIn}
+          onGoogleSignIn={onGoogleSignIn}
+          onMarkAsCompleted={onMarkAsCompleted}
+        />
+      </main>
+
+      <PaymentDialog
+        appointment={paymentAppointment}
+        isOpen={!!paymentAppointment}
+        onClose={onClosePaymentDialog}
+        onPaymentSuccess={onPaymentSuccess}
+      />
+    </div>
+  )
+}
