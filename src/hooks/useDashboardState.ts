@@ -28,7 +28,11 @@ export function useDashboardState() {
     getTodayAppointments,
     getUpcomingAppointments,
     getCancelledAppointments,
-    clearError: clearAppointmentsError
+    clearError: clearAppointmentsError,
+    rescheduleAppointment,
+    cancelAppointment,
+    reactivateAppointment,
+    addAppointment
   } = useAppointments(accessToken, isGoogleSignedIn)
 
   const loading = authLoading || (isGoogleSignedIn && appointmentsLoading)
@@ -78,6 +82,24 @@ export function useDashboardState() {
     setPaymentAppointment(null)
   }
 
+  const handleRescheduleAppointment = async (appointment: Appointment, newDate: Date) => {
+    const duration = appointment.end.getTime() - appointment.start.getTime()
+    const newEnd = new Date(newDate.getTime() + duration)
+    await rescheduleAppointment(appointment.id, newDate, newEnd)
+  }
+
+  const handleCancelAppointment = async (appointment: Appointment) => {
+    await cancelAppointment(appointment.id)
+  }
+
+  const handleReactivateAppointment = async (appointment: Appointment) => {
+    await reactivateAppointment(appointment.id)
+  }
+
+  const handleAddAppointment = async (appointmentData: any) => {
+    await addAppointment(appointmentData)
+  }
+
   return {
     // State
     paymentAppointment,
@@ -106,6 +128,10 @@ export function useDashboardState() {
     handlePaymentSuccess,
     clearError,
     fetchAppointments,
-    googleSignIn
+    googleSignIn,
+    handleRescheduleAppointment,
+    handleCancelAppointment,
+    handleReactivateAppointment,
+    handleAddAppointment
   }
 }

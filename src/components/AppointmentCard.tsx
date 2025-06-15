@@ -11,9 +11,16 @@ import { AppointmentContextMenu } from '@/components/appointment/AppointmentCont
 interface AppointmentCardProps {
   appointment: Appointment
   onMarkAsCompleted: (appointment: Appointment) => void
+  onCancelAppointment: (appointment: Appointment) => Promise<void>
+  onReactivateAppointment: (appointment: Appointment) => Promise<void>
 }
 
-export function AppointmentCard({ appointment, onMarkAsCompleted }: AppointmentCardProps) {
+export function AppointmentCard({ 
+  appointment, 
+  onMarkAsCompleted, 
+  onCancelAppointment,
+  onReactivateAppointment
+}: AppointmentCardProps) {
   const isCompleted = appointment.status === 'completed'
   const isCancelled = appointment.status === 'cancelled'
 
@@ -22,6 +29,8 @@ export function AppointmentCard({ appointment, onMarkAsCompleted }: AppointmentC
       <AppointmentContextMenu 
         appointment={appointment} 
         onMarkAsCompleted={onMarkAsCompleted}
+        onCancelAppointment={onCancelAppointment}
+        onReactivateAppointment={onReactivateAppointment}
       >
         <Card className={`hover:shadow-lg transition-all duration-200 relative border-l-4 ${
           isCompleted ? 'border-l-green-500 bg-green-50/30' : 

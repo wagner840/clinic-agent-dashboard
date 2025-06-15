@@ -30,6 +30,10 @@ interface DashboardContentProps {
   onClearError: () => void
   onPaymentSuccess: () => void
   onClosePaymentDialog: () => void
+  onRescheduleAppointment: (appointment: Appointment, newDate: Date) => Promise<void>
+  onCancelAppointment: (appointment: Appointment) => Promise<void>
+  onReactivateAppointment: (appointment: Appointment) => Promise<void>
+  onAddAppointment: (appointmentData: any) => Promise<void>
 }
 
 export function DashboardContent({
@@ -51,7 +55,11 @@ export function DashboardContent({
   onRetry,
   onClearError,
   onPaymentSuccess,
-  onClosePaymentDialog
+  onClosePaymentDialog,
+  onRescheduleAppointment,
+  onCancelAppointment,
+  onReactivateAppointment,
+  onAddAppointment
 }: DashboardContentProps) {
   return (
     <div className="min-h-screen bg-gray-50">
@@ -92,6 +100,10 @@ export function DashboardContent({
           loading={loading && isGoogleSignedIn}
           onGoogleSignIn={onGoogleSignIn}
           onMarkAsCompleted={onMarkAsCompleted}
+          onRescheduleAppointment={onRescheduleAppointment}
+          onCancelAppointment={onCancelAppointment}
+          onReactivateAppointment={onReactivateAppointment}
+          onAddAppointment={onAddAppointment}
         />
       </main>
 

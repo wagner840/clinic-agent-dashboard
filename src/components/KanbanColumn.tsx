@@ -13,6 +13,8 @@ interface KanbanColumnProps {
   icon: LucideIcon
   badgeColor?: string
   onMarkAsCompleted: (appointment: Appointment) => void
+  onCancelAppointment: (appointment: Appointment) => Promise<void>
+  onReactivateAppointment: (appointment: Appointment) => Promise<void>
 }
 
 export function KanbanColumn({ 
@@ -21,7 +23,9 @@ export function KanbanColumn({
   appointments, 
   icon: Icon, 
   badgeColor = "bg-blue-100 text-blue-800 border-blue-200",
-  onMarkAsCompleted 
+  onMarkAsCompleted,
+  onCancelAppointment,
+  onReactivateAppointment
 }: KanbanColumnProps) {
   return (
     <Card className="h-fit">
@@ -61,7 +65,7 @@ export function KanbanColumn({
                     key={appointment.id}
                     draggableId={appointment.id}
                     index={index}
-                    isDragDisabled={appointment.status === 'completed' || appointment.status === 'cancelled'}
+                    isDragDisabled={appointment.status === 'completed'}
                   >
                     {(provided, snapshot) => (
                       <div
@@ -71,7 +75,7 @@ export function KanbanColumn({
                         className={`${
                           snapshot.isDragging ? 'rotate-3 shadow-lg' : ''
                         } ${
-                          appointment.status === 'completed' || appointment.status === 'cancelled' 
+                          appointment.status === 'completed'
                             ? 'opacity-60 cursor-not-allowed' 
                             : 'cursor-grab active:cursor-grabbing'
                         }`}
@@ -79,6 +83,8 @@ export function KanbanColumn({
                         <AppointmentCard
                           appointment={appointment}
                           onMarkAsCompleted={onMarkAsCompleted}
+                          onCancelAppointment={onCancelAppointment}
+                          onReactivateAppointment={onReactivateAppointment}
                         />
                       </div>
                     )}

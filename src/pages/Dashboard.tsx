@@ -23,7 +23,11 @@ export default function Dashboard() {
     handlePaymentSuccess,
     clearError,
     fetchAppointments,
-    googleSignIn
+    googleSignIn,
+    handleRescheduleAppointment,
+    handleCancelAppointment,
+    handleReactivateAppointment,
+    handleAddAppointment
   } = useDashboardState()
 
   console.log('Google Auth and Appointments status:', {
@@ -59,6 +63,10 @@ export default function Dashboard() {
         onClearError={clearError}
         onPaymentSuccess={handlePaymentSuccess}
         onClosePaymentDialog={() => setPaymentAppointment(null)}
+        onRescheduleAppointment={handleRescheduleAppointment}
+        onCancelAppointment={handleCancelAppointment}
+        onReactivateAppointment={handleReactivateAppointment}
+        onAddAppointment={handleAddAppointment}
       />
     </TooltipProvider>
   )

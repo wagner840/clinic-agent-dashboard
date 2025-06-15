@@ -1,10 +1,13 @@
 
-import { Calendar, Clock, XCircle } from 'lucide-react'
+import { Calendar, Clock, XCircle, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { KanbanColumn } from '@/components/KanbanColumn'
 import { Appointment } from '@/types/appointment'
 import { DragDropContext, DropResult } from 'react-beautiful-dnd'
 import { useToast } from "@/hooks/use-toast"
+import { useState } from 'react'
+import { RescheduleModal } from '@/components/modals/RescheduleModal'
+import { AddAppointmentModal } from '@/components/modals/AddAppointmentModal'
 
 interface AppointmentsSectionProps {
   todayAppointments: Appointment[]
@@ -15,6 +18,10 @@ interface AppointmentsSectionProps {
   loading: boolean
   onGoogleSignIn: () => Promise<void>
   onMarkAsCompleted: (appointment: Appointment) => void
+  onRescheduleAppointment: (appointment: Appointment, newDate: Date) => Promise<void>
+  onCancelAppointment: (appointment: Appointment) => Promise<void>
+  onReactivateAppointment: (appointment: Appointment) => Promise<void>
+  onAddAppointment: (appointmentData: any) => Promise<void>
 }
 
 export function AppointmentsSection({
@@ -25,48 +32,104 @@ export function AppointmentsSection({
   isGoogleInitialized,
   loading,
   onGoogleSignIn,
-  onMarkAsCompleted
+  onMarkAsCompleted,
+  onRescheduleAppointment,
+  onCancelAppointment,
+  onReactivateAppointment,
+  onAddAppointment
 }: AppointmentsSectionProps) {
   const { toast } = useToast()
+  const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false)
+  const [addModalOpen, setAddModalOpen] = useState(false)
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
 
   const handleDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result
 
-    // Se não há destino, cancela
     if (!destination) return
-
-    // Se foi solto no mesmo lugar, cancela
     if (destination.droppableId === source.droppableId && destination.index === source.index) {
       return
     }
 
-    // Encontra o appointment que foi movido
     const allAppointments = [...todayAppointments, ...upcomingAppointments, ...cancelledAppointments]
     const movedAppointment = allAppointments.find(apt => apt.id === draggableId)
 
     if (!movedAppointment) return
 
-    // Lógica de movimentação baseada no destino
-    if (destination.droppableId === 'cancelled') {
-      toast({
-        title: 'Função em desenvolvimento',
-        description: 'A funcionalidade de cancelar agendamentos via drag and drop estará disponível em breve.',
-      })
+    // Se moveu de "upcoming" para "today", abre modal para alterar horário
+    if (source.droppableId === 'upcoming' && destination.droppableId === 'today') {
+      setSelectedAppointment(movedAppointment)
+      setRescheduleModalOpen(true)
       return
     }
 
-    if (destination.droppableId === 'today' && movedAppointment.status === 'scheduled') {
-      // Se arrastou para "hoje", marca como concluído
-      onMarkAsCompleted(movedAppointment)
+    // Se moveu para "cancelled", cancela o agendamento
+    if (destination.droppableId === 'cancelled') {
+      handleCancelAppointment(movedAppointment)
+      return
+    }
+
+    // Se moveu de "cancelled" para outro lugar, reativa
+    if (source.droppableId === 'cancelled' && destination.droppableId !== 'cancelled') {
+      handleReactivateAppointment(movedAppointment)
+      return
+    }
+
+    toast({
+      title: 'Informação',
+      description: 'Para outras alterações, use as opções do menu do agendamento.',
+    })
+  }
+
+  const handleCancelAppointment = async (appointment: Appointment) => {
+    try {
+      await onCancelAppointment(appointment)
       toast({
-        title: 'Consulta finalizada!',
-        description: `${movedAppointment.patient.name} foi marcado para finalização.`,
+        title: 'Agendamento cancelado',
+        description: `${appointment.patient.name} foi cancelado com sucesso.`,
       })
-    } else if (destination.droppableId === 'upcoming') {
+    } catch (error) {
       toast({
-        title: 'Informação',
-        description: 'Para reagendar consultas, use diretamente o Google Calendar.',
+        title: 'Erro ao cancelar',
+        description: 'Ocorreu um erro ao cancelar o agendamento.',
+        variant: 'destructive',
       })
+    }
+  }
+
+  const handleReactivateAppointment = async (appointment: Appointment) => {
+    try {
+      await onReactivateAppointment(appointment)
+      toast({
+        title: 'Agendamento reativado',
+        description: `${appointment.patient.name} foi reativado com sucesso.`,
+      })
+    } catch (error) {
+      toast({
+        title: 'Erro ao reativar',
+        description: 'Ocorreu um erro ao reativar o agendamento.',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const handleReschedule = async (newDate: Date) => {
+    if (selectedAppointment) {
+      try {
+        await onRescheduleAppointment(selectedAppointment, newDate)
+        toast({
+          title: 'Horário alterado',
+          description: `${selectedAppointment.patient.name} foi reagendado com sucesso.`,
+        })
+        setRescheduleModalOpen(false)
+        setSelectedAppointment(null)
+      } catch (error) {
+        toast({
+          title: 'Erro ao reagendar',
+          description: 'Ocorreu um erro ao alterar o horário.',
+          variant: 'destructive',
+        })
+      }
     }
   }
 
@@ -79,7 +142,7 @@ export function AppointmentsSection({
             Conecte o Google Calendar
           </h3>
           <p className="text-gray-500 mb-6 max-w-md mx-auto">
-            Para visualizar e gerenciar seus agendamentos no formato Kanban, 
+            Para visualizar e gerenciar seus agendamentos, 
             conecte sua conta do Google Calendar.
           </p>
           <Button onClick={onGoogleSignIn} disabled={!isGoogleInitialized} size="lg">
@@ -104,11 +167,17 @@ export function AppointmentsSection({
 
   return (
     <div className="mt-8">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Quadro Kanban - Agendamentos</h2>
-        <p className="text-gray-600">
-          Arraste e solte os agendamentos para gerenciá-los. Arraste para "Hoje" para finalizar uma consulta.
-        </p>
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Agendamentos</h2>
+          <p className="text-gray-600">
+            Arraste e solte para gerenciar. Arraste para "Hoje" para alterar horário.
+          </p>
+        </div>
+        <Button onClick={() => setAddModalOpen(true)} className="sm:w-auto">
+          <Plus className="h-4 w-4 mr-2" />
+          Novo Agendamento
+        </Button>
       </div>
       
       <DragDropContext onDragEnd={handleDragEnd}>
@@ -120,6 +189,8 @@ export function AppointmentsSection({
             icon={Calendar}
             badgeColor="bg-green-100 text-green-800 border-green-200"
             onMarkAsCompleted={onMarkAsCompleted}
+            onCancelAppointment={onCancelAppointment}
+            onReactivateAppointment={onReactivateAppointment}
           />
           
           <KanbanColumn
@@ -129,6 +200,8 @@ export function AppointmentsSection({
             icon={Clock}
             badgeColor="bg-blue-100 text-blue-800 border-blue-200"
             onMarkAsCompleted={onMarkAsCompleted}
+            onCancelAppointment={onCancelAppointment}
+            onReactivateAppointment={onReactivateAppointment}
           />
           
           <KanbanColumn
@@ -138,6 +211,8 @@ export function AppointmentsSection({
             icon={XCircle}
             badgeColor="bg-red-100 text-red-800 border-red-200"
             onMarkAsCompleted={onMarkAsCompleted}
+            onCancelAppointment={onCancelAppointment}
+            onReactivateAppointment={onReactivateAppointment}
           />
         </div>
       </DragDropContext>
@@ -148,13 +223,30 @@ export function AppointmentsSection({
           <div className="text-sm text-blue-800">
             <p className="font-medium mb-1">Dicas de uso:</p>
             <ul className="list-disc list-inside space-y-1 text-blue-700">
-              <li>Arraste um agendamento para "Hoje" para finalizar e registrar pagamento</li>
-              <li>Use o clique direito nos cards para mais opções</li>
-              <li>Agendamentos finalizados e cancelados não podem ser movidos</li>
+              <li>Arraste de "Próximos" para "Hoje" para alterar horário</li>
+              <li>Arraste para "Cancelados" para cancelar agendamento</li>
+              <li>Clique em "Finalizar" para concluir e registrar pagamento</li>
+              <li>Use o menu do card (botão direito) para mais opções</li>
             </ul>
           </div>
         </div>
       </div>
+
+      <RescheduleModal
+        isOpen={rescheduleModalOpen}
+        onClose={() => {
+          setRescheduleModalOpen(false)
+          setSelectedAppointment(null)
+        }}
+        appointment={selectedAppointment}
+        onReschedule={handleReschedule}
+      />
+
+      <AddAppointmentModal
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        onAddAppointment={onAddAppointment}
+      />
     </div>
   )
 }

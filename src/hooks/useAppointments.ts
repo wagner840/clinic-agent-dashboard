@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react'
 import { Appointment } from '@/types/appointment'
 import { GoogleCalendarService } from '@/services/googleCalendar'
@@ -95,6 +94,119 @@ export function useAppointments(accessToken: string | null, isGoogleSignedIn: bo
     }
   }, [accessToken, user, isGoogleSignedIn])
 
+  const rescheduleAppointment = useCallback(async (eventId: string, newStart: Date, newEnd: Date) => {
+    if (!accessToken || !user) return
+
+    try {
+      const allCalendars = await calendarService.fetchCalendarList(accessToken)
+      const targetCalendars = allCalendars.filter(cal => TARGET_CALENDAR_IDS.includes(cal.id))
+
+      // Tentar reagendar em cada calendário alvo até encontrar o evento
+      for (const calendar of targetCalendars) {
+        try {
+          await calendarService.rescheduleAppointment(accessToken, calendar.id, eventId, newStart, newEnd)
+          await fetchAppointments() // Refresh appointments
+          return
+        } catch (error: any) {
+          if (!error.message.includes('404')) {
+            throw error
+          }
+          // Continue para o próximo calendário se o evento não foi encontrado
+        }
+      }
+
+      throw new Error('Evento não encontrado em nenhum calendário')
+    } catch (error: any) {
+      console.error('Error rescheduling appointment:', error)
+      setError(`Erro ao reagendar: ${error.message}`)
+      throw error
+    }
+  }, [accessToken, user, fetchAppointments])
+
+  const cancelAppointment = useCallback(async (eventId: string) => {
+    if (!accessToken || !user) return
+
+    try {
+      const allCalendars = await calendarService.fetchCalendarList(accessToken)
+      const targetCalendars = allCalendars.filter(cal => TARGET_CALENDAR_IDS.includes(cal.id))
+
+      for (const calendar of targetCalendars) {
+        try {
+          await calendarService.cancelAppointment(accessToken, calendar.id, eventId)
+          await fetchAppointments()
+          return
+        } catch (error: any) {
+          if (!error.message.includes('404')) {
+            throw error
+          }
+        }
+      }
+
+      throw new Error('Evento não encontrado em nenhum calendário')
+    } catch (error: any) {
+      console.error('Error cancelling appointment:', error)
+      setError(`Erro ao cancelar: ${error.message}`)
+      throw error
+    }
+  }, [accessToken, user, fetchAppointments])
+
+  const reactivateAppointment = useCallback(async (eventId: string) => {
+    if (!accessToken || !user) return
+
+    try {
+      const allCalendars = await calendarService.fetchCalendarList(accessToken)
+      const targetCalendars = allCalendars.filter(cal => TARGET_CALENDAR_IDS.includes(cal.id))
+
+      for (const calendar of targetCalendars) {
+        try {
+          await calendarService.reactivateAppointment(accessToken, calendar.id, eventId)
+          await fetchAppointments()
+          return
+        } catch (error: any) {
+          if (!error.message.includes('404')) {
+            throw error
+          }
+        }
+      }
+
+      throw new Error('Evento não encontrado em nenhum calendário')
+    } catch (error: any) {
+      console.error('Error reactivating appointment:', error)
+      setError(`Erro ao reativar: ${error.message}`)
+      throw error
+    }
+  }, [accessToken, user, fetchAppointments])
+
+  const addAppointment = useCallback(async (appointmentData: {
+    patientName: string
+    patientEmail?: string
+    patientPhone?: string
+    start: Date
+    end: Date
+    type: 'consultation' | 'procedure' | 'follow-up'
+    description?: string
+  }) => {
+    if (!accessToken || !user) return
+
+    try {
+      const allCalendars = await calendarService.fetchCalendarList(accessToken)
+      const targetCalendars = allCalendars.filter(cal => TARGET_CALENDAR_IDS.includes(cal.id))
+
+      if (targetCalendars.length === 0) {
+        throw new Error('Nenhum calendário alvo encontrado')
+      }
+
+      // Usar o primeiro calendário disponível
+      const primaryCalendar = targetCalendars[0]
+      await calendarService.createAppointment(accessToken, primaryCalendar.id, appointmentData)
+      await fetchAppointments()
+    } catch (error: any) {
+      console.error('Error adding appointment:', error)
+      setError(`Erro ao adicionar agendamento: ${error.message}`)
+      throw error
+    }
+  }, [accessToken, user, fetchAppointments])
+
   useEffect(() => {
     if (isGoogleSignedIn) {
       fetchAppointments()
@@ -131,5 +243,9 @@ export function useAppointments(accessToken: string | null, isGoogleSignedIn: bo
     getTodayAppointments,
     getUpcomingAppointments,
     getCancelledAppointments,
+    rescheduleAppointment,
+    cancelAppointment,
+    reactivateAppointment,
+    addAppointment,
   }
 }

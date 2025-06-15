@@ -146,6 +146,84 @@ export class GoogleCalendarService {
     )
   }
 
+  async createAppointment(accessToken: string | null, calendarId: string, appointmentData: {
+    patientName: string
+    patientEmail?: string
+    patientPhone?: string
+    start: Date
+    end: Date
+    type: 'consultation' | 'procedure' | 'follow-up'
+    description?: string
+  }): Promise<string> {
+    const typeLabels = {
+      consultation: 'Consulta',
+      procedure: 'Procedimento',
+      follow-up: 'Retorno'
+    }
+
+    const event: CalendarEvent = {
+      id: '',
+      summary: `${typeLabels[appointmentData.type]} - ${appointmentData.patientName}`,
+      description: this.buildEventDescription(appointmentData),
+      start: {
+        dateTime: appointmentData.start.toISOString(),
+      },
+      end: {
+        dateTime: appointmentData.end.toISOString(),
+      },
+      attendees: appointmentData.patientEmail ? [{
+        email: appointmentData.patientEmail,
+        displayName: appointmentData.patientName
+      }] : undefined,
+      status: 'confirmed'
+    }
+
+    return this.createEvent(accessToken, calendarId, event)
+  }
+
+  async rescheduleAppointment(accessToken: string | null, calendarId: string, eventId: string, newStart: Date, newEnd: Date): Promise<void> {
+    const updateData = {
+      start: {
+        dateTime: newStart.toISOString(),
+      },
+      end: {
+        dateTime: newEnd.toISOString(),
+      }
+    }
+
+    await this.updateEvent(accessToken, calendarId, eventId, updateData)
+  }
+
+  async cancelAppointment(accessToken: string | null, calendarId: string, eventId: string): Promise<void> {
+    await this.updateEvent(accessToken, calendarId, eventId, { status: 'cancelled' })
+  }
+
+  async reactivateAppointment(accessToken: string | null, calendarId: string, eventId: string): Promise<void> {
+    await this.updateEvent(accessToken, calendarId, eventId, { status: 'confirmed' })
+  }
+
+  private buildEventDescription(appointmentData: {
+    patientEmail?: string
+    patientPhone?: string
+    description?: string
+  }): string {
+    const parts = []
+    
+    if (appointmentData.patientEmail) {
+      parts.push(`Email: ${appointmentData.patientEmail}`)
+    }
+    
+    if (appointmentData.patientPhone) {
+      parts.push(`Telefone: ${appointmentData.patientPhone}`)
+    }
+    
+    if (appointmentData.description) {
+      parts.push(`Observações: ${appointmentData.description}`)
+    }
+    
+    return parts.join('\n')
+  }
+
   convertToAppointment(event: CalendarEvent, doctorEmail: string): Appointment {
     const patientName = this.extractPatientName(event.summary)
     const patientEmail = event.attendees?.find(a => a.email !== doctorEmail)?.email || ''
