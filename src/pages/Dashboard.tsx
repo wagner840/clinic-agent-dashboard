@@ -1,9 +1,11 @@
-
+import { useState } from 'react'
 import { useGoogleCalendarReal } from '@/hooks/useGoogleCalendarReal'
 import { DashboardStats } from '@/components/DashboardStats'
 import { DashboardHeader } from '@/components/DashboardHeader'
 import { GoogleAuthAlerts } from '@/components/GoogleAuthAlerts'
 import { AppointmentsSection } from '@/components/AppointmentsSection'
+import { PaymentDialog } from '@/components/PaymentDialog'
+import { Appointment } from '@/types/appointment'
 
 export default function Dashboard() {
   const { 
@@ -22,6 +24,8 @@ export default function Dashboard() {
     clearError,
     googleProfile
   } = useGoogleCalendarReal()
+
+  const [paymentAppointment, setPaymentAppointment] = useState<Appointment | null>(null)
 
   const todayAppointments = getTodayAppointments()
   const upcomingAppointments = getUpcomingAppointments()
@@ -52,6 +56,10 @@ export default function Dashboard() {
   const handleSwitchAccount = async (): Promise<void> => {
     console.log('Botão de troca de conta clicado')
     await googleSwitchAccount()
+  }
+
+  const handleMarkAsCompleted = (appointment: Appointment) => {
+    setPaymentAppointment(appointment)
   }
 
   return (
@@ -92,8 +100,19 @@ export default function Dashboard() {
           isGoogleInitialized={isGoogleInitialized}
           loading={loading}
           onGoogleSignIn={googleSignIn}
+          onMarkAsCompleted={handleMarkAsCompleted}
         />
       </main>
+
+      <PaymentDialog
+        appointment={paymentAppointment}
+        isOpen={!!paymentAppointment}
+        onClose={() => setPaymentAppointment(null)}
+        onPaymentSuccess={() => {
+          fetchAppointments()
+          setPaymentAppointment(null)
+        }}
+      />
     </div>
   )
 }

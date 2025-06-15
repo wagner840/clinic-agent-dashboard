@@ -13,6 +13,7 @@ interface AppointmentsSectionProps {
   isGoogleInitialized: boolean
   loading: boolean
   onGoogleSignIn: () => Promise<void>
+  onMarkAsCompleted: (appointment: Appointment) => void
 }
 
 export function AppointmentsSection({
@@ -22,7 +23,8 @@ export function AppointmentsSection({
   isGoogleSignedIn,
   isGoogleInitialized,
   loading,
-  onGoogleSignIn
+  onGoogleSignIn,
+  onMarkAsCompleted
 }: AppointmentsSectionProps) {
   return (
     <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -64,6 +66,7 @@ export function AppointmentsSection({
                 <AppointmentCard 
                   key={appointment.id} 
                   appointment={appointment} 
+                  onMarkAsCompleted={onMarkAsCompleted}
                 />
               ))}
             </div>
@@ -103,6 +106,7 @@ export function AppointmentsSection({
                 <AppointmentCard 
                   key={appointment.id} 
                   appointment={appointment} 
+                  onMarkAsCompleted={onMarkAsCompleted}
                 />
               ))}
             </div>
@@ -141,7 +145,8 @@ export function AppointmentsSection({
               {cancelledAppointments.slice(0, 10).map(appointment => (
                 <AppointmentCard 
                   key={appointment.id} 
-                  appointment={appointment} 
+                  appointment={appointment}
+                  onMarkAsCompleted={onMarkAsCompleted}
                 />
               ))}
             </div>

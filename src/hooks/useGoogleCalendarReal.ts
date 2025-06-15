@@ -65,8 +65,29 @@ export function useGoogleCalendarReal() {
         .map(event => calendarService.convertToAppointment(event, user?.email || ''))
         .sort((a, b) => a.start.getTime() - b.start.getTime())
       
-      setAppointments(convertedAppointments)
-      console.log(`Carregados ${convertedAppointments.length} agendamentos de ${targetCalendars.length} calendários.`)
+      const { data: payments, error: paymentsError } = await supabase
+        .from('payments')
+        .select('appointment_id')
+
+      if (paymentsError) {
+        console.error('Error fetching payments', paymentsError)
+      }
+
+      if (payments) {
+        const paidAppointmentIds = new Set(payments.map(p => p.appointment_id))
+        const updatedAppointments = convertedAppointments.map(apt => {
+          if (paidAppointmentIds.has(apt.id)) {
+            return { ...apt, status: 'completed' as const }
+          }
+          return apt
+        })
+        setAppointments(updatedAppointments)
+        console.log(`Carregados ${updatedAppointments.length} agendamentos, com status de pagamento atualizado.`)
+      } else {
+        setAppointments(convertedAppointments)
+        console.log(`Carregados ${convertedAppointments.length} agendamentos de ${targetCalendars.length} calendários.`)
+      }
+
     } catch (err: any) {
       console.error('Erro detalhado ao buscar eventos:', err)
       const errorMessage = err.message || 'Erro ao carregar agendamentos'
