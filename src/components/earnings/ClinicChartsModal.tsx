@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
-import { TrendingUp, BarChart3, PieChart as PieChartIcon, Calendar, Filter, X } from 'lucide-react'
+import { TrendingUp, BarChart3, PieChart as PieChartIcon, X } from 'lucide-react'
 import { DoctorTotalEarnings } from '@/types/earnings'
+import { ChartFilters, ChartFilterState } from './ChartFilters'
 
 interface ClinicChartsModalProps {
   isOpen: boolean
@@ -34,7 +35,15 @@ const chartConfig = {
 export function ClinicChartsModal({ isOpen, onClose, totalEarnings }: ClinicChartsModalProps) {
   const [chartType, setChartType] = useState<'bar' | 'line' | 'pie'>('bar')
   const [dataType, setDataType] = useState<'amount' | 'appointments'>('amount')
+  const [viewMode, setViewMode] = useState<'combined' | 'individual'>('combined')
+  const [selectedDoctor, setSelectedDoctor] = useState<string>('all')
   const [comparisonMode, setComparisonMode] = useState<'none' | 'private-insurance'>('none')
+  const [filters, setFilters] = useState<ChartFilterState>({
+    timeRange: 'all',
+    dayOfWeek: 'all',
+    month: 'all',
+    year: 'all'
+  })
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -43,25 +52,62 @@ export function ClinicChartsModal({ isOpen, onClose, totalEarnings }: ClinicChar
     }).format(value)
   }
 
-  const prepareChartData = () => {
-    return totalEarnings.map(doctor => ({
+  // Aplicar filtros aos dados (simulação - em um caso real você filtraria os dados brutos)
+  const getFilteredEarnings = () => {
+    // Por enquanto retorna os dados originais, mas aqui você implementaria a lógica de filtragem
+    // baseada nos filtros de tempo, dia da semana, mês e ano
+    return totalEarnings
+  }
+
+  const filteredEarnings = getFilteredEarnings()
+
+  const prepareCombinedData = () => {
+    const totalClinicAmount = filteredEarnings.reduce((sum, doctor) => 
+      sum + (dataType === 'amount' ? doctor.total_amount : doctor.total_appointments), 0)
+    const totalPrivate = filteredEarnings.reduce((sum, doctor) => 
+      sum + (dataType === 'amount' ? doctor.private_amount : doctor.private_appointments), 0)
+    const totalInsurance = filteredEarnings.reduce((sum, doctor) => 
+      sum + (dataType === 'amount' ? doctor.insurance_amount : doctor.insurance_appointments), 0)
+
+    return [{
+      name: 'Total da Clínica',
+      fullName: 'Total da Clínica',
+      total: totalClinicAmount,
+      private: totalPrivate,
+      insurance: totalInsurance,
+    }]
+  }
+
+  const prepareIndividualData = () => {
+    let data = filteredEarnings.map(doctor => ({
       name: doctor.doctor_name.split(' ')[0], // Primeiro nome para mobile
       fullName: doctor.doctor_name,
       total: dataType === 'amount' ? doctor.total_amount : doctor.total_appointments,
       private: dataType === 'amount' ? doctor.private_amount : doctor.private_appointments,
       insurance: dataType === 'amount' ? doctor.insurance_amount : doctor.insurance_appointments,
     }))
+
+    // Se um médico específico foi selecionado, filtrar apenas ele
+    if (selectedDoctor !== 'all') {
+      data = data.filter(doctor => doctor.fullName === selectedDoctor)
+    }
+
+    return data
+  }
+
+  const prepareChartData = () => {
+    return viewMode === 'combined' ? prepareCombinedData() : prepareIndividualData()
   }
 
   const preparePieData = () => {
-    const totalAmount = totalEarnings.reduce((sum, doctor) => 
-      sum + (dataType === 'amount' ? doctor.total_amount : doctor.total_appointments), 0)
+    const data = prepareChartData()
+    const totalAmount = data.reduce((sum, item) => sum + item.total, 0)
     
-    return totalEarnings.map(doctor => ({
-      name: doctor.doctor_name.split(' ')[0],
-      fullName: doctor.doctor_name,
-      value: dataType === 'amount' ? doctor.total_amount : doctor.total_appointments,
-      percentage: ((dataType === 'amount' ? doctor.total_amount : doctor.total_appointments) / totalAmount * 100).toFixed(1)
+    return data.map((item, index) => ({
+      name: item.name,
+      fullName: item.fullName,
+      value: item.total,
+      percentage: totalAmount > 0 ? ((item.total / totalAmount) * 100).toFixed(1) : '0'
     }))
   }
 
@@ -182,21 +228,22 @@ export function ClinicChartsModal({ isOpen, onClose, totalEarnings }: ClinicChar
     )
   }
 
-  const totalClinicAmount = totalEarnings.reduce((sum, doctor) => sum + doctor.total_amount, 0)
-  const totalClinicAppointments = totalEarnings.reduce((sum, doctor) => sum + doctor.total_appointments, 0)
+  const totalClinicAmount = filteredEarnings.reduce((sum, doctor) => sum + doctor.total_amount, 0)
+  const totalClinicAppointments = filteredEarnings.reduce((sum, doctor) => sum + doctor.total_appointments, 0)
+  const availableDoctors = filteredEarnings.map(doctor => doctor.doctor_name)
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div>
               <DialogTitle className="flex items-center space-x-2">
                 <TrendingUp className="h-5 w-5" />
-                <span>Análise Gráfica - Totais da Clínica</span>
+                <span>Análise Gráfica - Dados da Clínica</span>
               </DialogTitle>
               <DialogDescription>
-                Visualize os dados de faturamento e consultas por médico
+                Visualize e compare os dados de faturamento e consultas
               </DialogDescription>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose}>
@@ -204,6 +251,9 @@ export function ClinicChartsModal({ isOpen, onClose, totalEarnings }: ClinicChar
             </Button>
           </div>
         </DialogHeader>
+
+        {/* Filtros Avançados */}
+        <ChartFilters onFiltersChange={setFilters} />
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -230,11 +280,41 @@ export function ClinicChartsModal({ isOpen, onClose, totalEarnings }: ClinicChar
         </div>
 
         {/* Controls */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+          <div className="flex flex-col space-y-2">
+            <label className="text-sm font-medium">Visualização</label>
+            <Select value={viewMode} onValueChange={(value: 'combined' | 'individual') => setViewMode(value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="combined">Total da Clínica</SelectItem>
+                <SelectItem value="individual">Por Médico</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {viewMode === 'individual' && (
+            <div className="flex flex-col space-y-2">
+              <label className="text-sm font-medium">Médico</label>
+              <Select value={selectedDoctor} onValueChange={setSelectedDoctor}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Médicos</SelectItem>
+                  {availableDoctors.map(doctor => (
+                    <SelectItem key={doctor} value={doctor}>{doctor}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="flex flex-col space-y-2">
             <label className="text-sm font-medium">Tipo de Dados</label>
             <Select value={dataType} onValueChange={(value: 'amount' | 'appointments') => setDataType(value)}>
-              <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -247,7 +327,7 @@ export function ClinicChartsModal({ isOpen, onClose, totalEarnings }: ClinicChar
           <div className="flex flex-col space-y-2">
             <label className="text-sm font-medium">Comparação</label>
             <Select value={comparisonMode} onValueChange={(value: 'none' | 'private-insurance') => setComparisonMode(value)}>
-              <SelectTrigger className="w-full sm:w-[200px]">
+              <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -279,7 +359,8 @@ export function ClinicChartsModal({ isOpen, onClose, totalEarnings }: ClinicChar
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">
-                  {dataType === 'amount' ? 'Faturamento' : 'Consultas'} por Médico
+                  {dataType === 'amount' ? 'Faturamento' : 'Consultas'} 
+                  {viewMode === 'combined' ? ' - Total da Clínica' : ' por Médico'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
