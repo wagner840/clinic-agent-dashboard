@@ -2,10 +2,11 @@
 import { useGoogleAuth } from '@/hooks/useGoogleAuth'
 import { useAppointments } from '@/hooks/useAppointments'
 import { usePaymentState } from '@/hooks/dashboard/usePaymentState'
-import { useAppointmentHandlers } from '@/hooks/dashboard/useAppointmentHandlers'
 import { useGoogleAuthHandlers } from '@/hooks/dashboard/useGoogleAuthHandlers'
 import { useErrorHandlers } from '@/hooks/dashboard/useErrorHandlers'
-import { useState, useMemo } from 'react'
+import { useDashboardData } from '@/hooks/dashboard/useDashboardData'
+import { useDashboardActions } from '@/hooks/dashboard/useDashboardActions'
+import { useState } from 'react'
 
 export function useDashboardState() {
   // Always call hooks in the same order - no conditional calls
@@ -50,24 +51,32 @@ export function useDashboardState() {
 
   const [doctorFilter, setDoctorFilter] = useState('all')
 
-  const filteredAppointments = useMemo(() => {
-    if (doctorFilter === 'all' || !doctorFilter) {
-      return appointments
-    }
-    return appointments.filter(apt => apt.doctor.calendarId === doctorFilter)
-  }, [appointments, doctorFilter])
+  // Get filtered data
+  const dashboardData = useDashboardData({
+    appointments,
+    doctorFilter,
+    todayAppointments: getTodayAppointments(),
+    upcomingAppointments: getUpcomingAppointments(),
+    pastAppointments: getPastAppointments(),
+    completedAppointments: getCompletedAppointments(),
+    cancelledAppointments: getCancelledAppointments()
+  })
 
   // Initialize specialized hooks
   const paymentState = usePaymentState(fetchAppointments)
   const { paymentAppointment, setPaymentAppointment, handlePaymentSuccess } = paymentState
 
-  const appointmentHandlers = useAppointmentHandlers({
+  const dashboardActions = useDashboardActions({
     rescheduleAppointment,
     cancelAppointment,
     reactivateAppointment,
     addAppointment,
-    markAsCompleted
-  }, { setPaymentAppointment })
+    markAsCompleted,
+    handleCreateCalendar,
+    handleDeleteCalendar,
+    handleAddHolidaysToAll,
+    setPaymentAppointment
+  })
 
   const googleAuthHandlers = useGoogleAuthHandlers({
     isGoogleSignedIn,
@@ -87,12 +96,6 @@ export function useDashboardState() {
   // Compute derived state
   const loading = authLoading || (isGoogleSignedIn && appointmentsLoading)
   const error = authError || appointmentsError
-  
-  const todayAppointments = getTodayAppointments().filter(apt => filteredAppointments.includes(apt))
-  const upcomingAppointments = getUpcomingAppointments().filter(apt => filteredAppointments.includes(apt))
-  const pastAppointments = getPastAppointments().filter(apt => filteredAppointments.includes(apt))
-  const completedAppointments = getCompletedAppointments().filter(apt => filteredAppointments.includes(apt))
-  const cancelledAppointments = getCancelledAppointments().filter(apt => filteredAppointments.includes(apt))
   
   const currentGoogleUser = isGoogleSignedIn && googleProfile ? {
     email: googleProfile.getEmail(),
@@ -114,13 +117,13 @@ export function useDashboardState() {
     accessToken,
     
     // Data
-    appointments: filteredAppointments,
+    appointments: dashboardData.filteredAppointments,
     doctorCalendars,
-    todayAppointments,
-    upcomingAppointments,
-    pastAppointments,
-    completedAppointments,
-    cancelledAppointments,
+    todayAppointments: dashboardData.filteredTodayAppointments,
+    upcomingAppointments: dashboardData.filteredUpcomingAppointments,
+    pastAppointments: dashboardData.filteredPastAppointments,
+    completedAppointments: dashboardData.filteredCompletedAppointments,
+    cancelledAppointments: dashboardData.filteredCancelledAppointments,
     
     // Loading & Error states
     loading,
@@ -129,19 +132,19 @@ export function useDashboardState() {
     // Handlers
     handleGoogleAuth: googleAuthHandlers.handleGoogleAuth,
     handleSwitchAccount: googleAuthHandlers.handleSwitchAccount,
-    handleMarkAsCompleted: appointmentHandlers.handleMarkAsCompleted,
+    handleMarkAsCompleted: dashboardActions.handleMarkAsCompleted,
     handleRetry: errorHandlers.handleRetry,
     handlePaymentSuccess,
     clearError: errorHandlers.clearError,
     fetchAppointments,
     googleSignIn,
-    handleRescheduleAppointment: appointmentHandlers.handleRescheduleAppointment,
-    handleCancelAppointment: appointmentHandlers.handleCancelAppointment,
-    handleReactivateAppointment: appointmentHandlers.handleReactivateAppointment,
-    handleAddAppointment: appointmentHandlers.handleAddAppointment,
+    handleRescheduleAppointment: dashboardActions.handleRescheduleAppointment,
+    handleCancelAppointment: dashboardActions.handleCancelAppointment,
+    handleReactivateAppointment: dashboardActions.handleReactivateAppointment,
+    handleAddAppointment: dashboardActions.handleAddAppointment,
     // Calendar management
-    handleCreateCalendar,
-    handleDeleteCalendar,
-    handleAddHolidaysToAll
+    handleCreateCalendar: dashboardActions.handleCreateCalendar,
+    handleDeleteCalendar: dashboardActions.handleDeleteCalendar,
+    handleAddHolidaysToAll: dashboardActions.handleAddHolidaysToAll
   }
 }
