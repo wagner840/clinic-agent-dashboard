@@ -13,7 +13,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Appointment } from '@/types/appointment'
-import { toast } from '@/components/ui/use-toast'
+import { toast } from '@/hooks/use-toast'
 
 interface AppointmentContextMenuProps {
   appointment: Appointment
@@ -122,18 +122,14 @@ export function AppointmentContextMenu({
               <RotateCcw className="mr-2 h-4 w-4" />
               <span>Reativar Agendamento</span>
             </ContextMenuItem>
-            {onDeleteAppointment && (
-              <>
-                <ContextMenuSeparator />
-                <ContextMenuItem
-                  onClick={() => handleStatusChange('delete')}
-                  className="cursor-pointer text-red-600"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  <span>Excluir Permanentemente</span>
-                </ContextMenuItem>
-              </>
-            )}
+            <ContextMenuSeparator />
+            <ContextMenuItem
+              onClick={() => handleStatusChange('delete')}
+              className="cursor-pointer text-red-600"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              <span>Excluir Permanentemente</span>
+            </ContextMenuItem>
           </>
         )}
 
