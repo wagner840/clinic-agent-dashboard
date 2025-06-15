@@ -20,6 +20,41 @@ export function useAppointmentData(
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const syncAppointmentToSupabase = useCallback(async (appointment: Appointment) => {
+    if (!user) return
+
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .upsert({
+          id: appointment.id,
+          user_id: user.id,
+          title: appointment.title,
+          start_time: appointment.start.toISOString(),
+          end_time: appointment.end.toISOString(),
+          description: appointment.description,
+          patient_name: appointment.patient.name,
+          patient_email: appointment.patient.email,
+          patient_phone: appointment.patient.phone,
+          doctor_name: appointment.doctor.name,
+          doctor_email: appointment.doctor.email,
+          status: appointment.status,
+          type: appointment.type
+        }, {
+          onConflict: 'id',
+          ignoreDuplicates: false
+        })
+
+      if (error) {
+        console.error('Error syncing appointment to Supabase:', error)
+      } else {
+        console.log('✅ Appointment synced to Supabase:', appointment.id)
+      }
+    } catch (error) {
+      console.error('Error syncing appointment to Supabase:', error)
+    }
+  }, [user])
+
   const fetchAppointments = useCallback(async () => {
     if (!accessToken || !user || !isGoogleSignedIn) {
       if (isGoogleSignedIn) {
@@ -79,63 +114,51 @@ export function useAppointmentData(
         .map(event => calendarService.convertToAppointment(event, user?.email || ''))
         .sort((a, b) => a.start.getTime() - b.start.getTime())
       
-      console.log('🔄 Converted appointments before payment processing:', {
+      console.log('🔄 Converted appointments before Supabase sync:', {
         totalConverted: convertedAppointments.length,
         statusBreakdown: convertedAppointments.reduce((acc, apt) => {
           acc[apt.status] = (acc[apt.status] || 0) + 1
           return acc
-        }, {} as Record<string, number>),
-        sampleAppointments: convertedAppointments.slice(0, 3).map(apt => ({
-          id: apt.id,
-          title: apt.title,
-          start: apt.start,
-          status: apt.status,
-          patient: apt.patient.name
-        }))
+        }, {} as Record<string, number>)
       })
 
-      const { data: payments, error: paymentsError } = await supabase
-        .from('payments')
-        .select('appointment_id')
+      // Sync all appointments to Supabase
+      await Promise.all(convertedAppointments.map(syncAppointmentToSupabase))
 
-      if (paymentsError) {
-        console.error('Error fetching payments', paymentsError)
+      // Fetch status updates from Supabase
+      const { data: supabaseAppointments, error: supabaseError } = await supabase
+        .from('appointments')
+        .select('id, status')
+        .eq('user_id', user.id)
+
+      if (supabaseError) {
+        console.error('Error fetching appointment status from Supabase:', supabaseError)
       }
 
-      const paidAppointmentIds = new Set(payments?.map(p => p.appointment_id) || [])
-      console.log('💰 Payment data:', {
-        totalPayments: payments?.length || 0,
-        paidAppointmentIds: Array.from(paidAppointmentIds)
-      })
+      const statusMap = new Map(
+        supabaseAppointments?.map(apt => [apt.id, apt.status]) || []
+      )
 
+      // Update appointments with Supabase status
       const updatedAppointments = convertedAppointments.map(apt => {
-        if (apt.status === 'cancelled') {
-          return apt
-        }
-        if (paidAppointmentIds.has(apt.id)) {
-          console.log(`✅ Marking appointment ${apt.id} (${apt.patient.name}) as completed due to payment`)
-          return { ...apt, status: 'completed' as const }
+        const supabaseStatus = statusMap.get(apt.id)
+        if (supabaseStatus && supabaseStatus !== apt.status) {
+          console.log(`📊 Updating appointment ${apt.id} status from ${apt.status} to ${supabaseStatus}`)
+          return { ...apt, status: supabaseStatus as 'scheduled' | 'completed' | 'cancelled' }
         }
         return apt
       })
 
-      console.log('📋 Final appointments after payment processing:', {
+      console.log('📋 Final appointments after Supabase sync:', {
         totalFinal: updatedAppointments.length,
         statusBreakdown: updatedAppointments.reduce((acc, apt) => {
           acc[apt.status] = (acc[apt.status] || 0) + 1
           return acc
-        }, {} as Record<string, number>),
-        appointmentDetails: updatedAppointments.map(apt => ({
-          id: apt.id,
-          title: apt.title,
-          start: apt.start,
-          status: apt.status,
-          patient: apt.patient.name
-        }))
+        }, {} as Record<string, number>)
       })
 
       setAppointments(updatedAppointments)
-      console.log(`Carregados ${updatedAppointments.length} agendamentos, com status de pagamento atualizado.`)
+      console.log(`Carregados ${updatedAppointments.length} agendamentos, sincronizados com Supabase.`)
 
     } catch (err: any) {
       console.error('Erro detalhado ao buscar eventos:', err)
@@ -150,7 +173,7 @@ export function useAppointmentData(
     } finally {
       setLoading(false)
     }
-  }, [accessToken, user, isGoogleSignedIn])
+  }, [accessToken, user, isGoogleSignedIn, syncAppointmentToSupabase])
 
   useEffect(() => {
     if (isGoogleSignedIn) {

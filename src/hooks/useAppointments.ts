@@ -19,7 +19,8 @@ export function useAppointments(accessToken: string | null, isGoogleSignedIn: bo
     rescheduleAppointment,
     cancelAppointment,
     reactivateAppointment,
-    addAppointment
+    addAppointment,
+    markAsCompleted
   } = useAppointmentOperations(accessToken, user, fetchAppointments)
 
   const {
@@ -45,5 +46,6 @@ export function useAppointments(accessToken: string | null, isGoogleSignedIn: bo
     cancelAppointment,
     reactivateAppointment,
     addAppointment,
+    markAsCompleted,
   }
 }

@@ -34,7 +34,8 @@ export function useDashboardState() {
     rescheduleAppointment,
     cancelAppointment,
     reactivateAppointment,
-    addAppointment
+    addAppointment,
+    markAsCompleted
   } = useAppointments(accessToken, isGoogleSignedIn)
 
   const loading = authLoading || (isGoogleSignedIn && appointmentsLoading)
@@ -70,8 +71,13 @@ export function useDashboardState() {
     await googleSwitchAccount()
   }
 
-  const handleMarkAsCompleted = (appointment: Appointment) => {
-    setPaymentAppointment(appointment)
+  const handleMarkAsCompleted = async (appointment: Appointment) => {
+    try {
+      await markAsCompleted(appointment.id)
+      // No need to open payment dialog, just mark as completed
+    } catch (error: any) {
+      console.error('Error marking appointment as completed:', error)
+    }
   }
 
   const handleRetry = async () => {
