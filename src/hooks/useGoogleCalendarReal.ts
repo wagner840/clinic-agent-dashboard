@@ -1,10 +1,10 @@
-
 import { useState, useEffect, useCallback } from 'react'
 import { gapi } from 'gapi-script'
 import { Appointment } from '@/types/appointment'
 import { GoogleCalendarService } from '@/services/googleCalendar'
 import { useAuth } from './useAuth'
-import { GOOGLE_CLIENT_ID, GOOGLE_CALENDAR_SCOPES } from '@/lib/google'
+import { GOOGLE_CALENDAR_SCOPES } from '@/lib/google'
+import { supabase } from '@/integrations/supabase/client'
 
 export function useGoogleCalendarReal() {
   const { user, loading: authLoading } = useAuth()
@@ -18,6 +18,7 @@ export function useGoogleCalendarReal() {
   const [isGoogleSignedIn, setIsGoogleSignedIn] = useState(false)
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [googleProfile, setGoogleProfile] = useState<gapi.auth2.BasicProfile | null>(null)
+  const [googleClientId, setGoogleClientId] = useState<string | null>(null)
   
   const calendarService = new GoogleCalendarService()
 
@@ -52,12 +53,42 @@ export function useGoogleCalendarReal() {
     } finally {
       setLoading(false)
     }
-  }, [user])
+  }, [user]);
 
   useEffect(() => {
+    const fetchGoogleClientId = async () => {
+      console.log('Buscando Google Client ID da função do Supabase...');
+      const { data, error: invokeError } = await supabase.functions.invoke('get-google-client-id');
+      
+      if (invokeError) {
+        console.error('Erro ao buscar Google Client ID:', invokeError.message);
+        setError('Falha ao buscar a configuração do Google (Client ID). Verifique se a função "get-google-client-id" está implantada corretamente no Supabase.');
+        setIsGoogleInitialized(true); // Para o carregamento
+        return;
+      }
+
+      if (data && data.clientId) {
+        console.log('Google Client ID buscado com sucesso.');
+        setGoogleClientId(data.clientId);
+      } else {
+        console.error('Google Client ID não retornado pela função:', data);
+        setError('A configuração do Google está incompleta. O Client ID está ausente nos segredos do Supabase. Por favor, adicione um segredo chamado "client_id".');
+        setIsGoogleInitialized(true); // Para o carregamento
+      }
+    };
+
+    fetchGoogleClientId();
+  }, []);
+
+  useEffect(() => {
+    if (!googleClientId) {
+      console.log('Aguardando Google Client ID para inicializar o GAPI...');
+      return;
+    }
+
     const initClient = () => {
       window.gapi.client.init({
-        clientId: GOOGLE_CLIENT_ID,
+        clientId: googleClientId,
         scope: GOOGLE_CALENDAR_SCOPES,
         discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest']
       }).then(() => {
@@ -86,19 +117,13 @@ export function useGoogleCalendarReal() {
         updateSigninStatus(authInstance.isSignedIn.get())
       }).catch(err => {
         console.error("Erro ao inicializar o Google Client", err)
-        setError("Falha ao inicializar a integração com o Google. Verifique seu Client ID e a configuração no Google Cloud.")
+        setError("Falha ao inicializar a integração com o Google. Verifique se o Client ID é válido e a configuração no Google Cloud está correta.")
         setIsGoogleInitialized(true)
       })
     }
     
-    if (GOOGLE_CLIENT_ID.startsWith('YOUR_GOOGLE_CLIENT_ID_HERE')) {
-        setError("Por favor, configure seu ID de Cliente do Google no arquivo 'src/lib/google.ts'")
-        setIsGoogleInitialized(true)
-        return
-    }
-
     gapi.load('client:auth2', initClient)
-  }, [fetchAppointmentsCallback])
+  }, [googleClientId, fetchAppointmentsCallback])
 
   const handleGoogleSignIn = async () => {
     if (googleAuth) {
@@ -113,7 +138,7 @@ export function useGoogleCalendarReal() {
         }
       }
     }
-  }
+  };
 
   const handleGoogleSignOut = async () => {
     if (googleAuth) {
@@ -123,7 +148,7 @@ export function useGoogleCalendarReal() {
         console.error("Erro ao fazer logout do Google:", err)
       }
     }
-  }
+  };
 
   const getTodayAppointments = () => {
     const today = new Date()
@@ -131,13 +156,13 @@ export function useGoogleCalendarReal() {
       const aptDate = new Date(apt.start)
       return aptDate.toDateString() === today.toDateString()
     })
-  }
+  };
 
   const getUpcomingAppointments = () => {
     const now = new Date()
     return appointments.filter(apt => new Date(apt.start) > now)
       .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
-  }
+  };
 
   return {
     appointments,
