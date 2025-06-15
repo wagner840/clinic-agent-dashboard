@@ -1,3 +1,4 @@
+
 import { useGoogleAuth } from '@/hooks/useGoogleAuth'
 import { useAppointments } from '@/hooks/useAppointments'
 import { usePaymentState } from '@/hooks/dashboard/usePaymentState'
@@ -40,7 +41,11 @@ export function useDashboardState() {
     cancelAppointment,
     reactivateAppointment,
     addAppointment,
-    markAsCompleted
+    markAsCompleted,
+    // Calendar management
+    handleCreateCalendar,
+    handleDeleteCalendar,
+    handleAddHolidaysToAll
   } = appointmentsResult
 
   const [doctorFilter, setDoctorFilter] = useState('all')
@@ -106,6 +111,7 @@ export function useDashboardState() {
     isGoogleInitialized,
     isGoogleSignedIn,
     currentGoogleUser,
+    accessToken,
     
     // Data
     appointments: filteredAppointments,
@@ -132,6 +138,10 @@ export function useDashboardState() {
     handleRescheduleAppointment: appointmentHandlers.handleRescheduleAppointment,
     handleCancelAppointment: appointmentHandlers.handleCancelAppointment,
     handleReactivateAppointment: appointmentHandlers.handleReactivateAppointment,
-    handleAddAppointment: appointmentHandlers.handleAddAppointment
+    handleAddAppointment: appointmentHandlers.handleAddAppointment,
+    // Calendar management
+    handleCreateCalendar,
+    handleDeleteCalendar,
+    handleAddHolidaysToAll
   }
 }

@@ -3,6 +3,7 @@ import { useAuth } from './useAuth'
 import { useAppointmentData } from './appointments/useAppointmentData'
 import { useAppointmentOperations } from './appointments/useAppointmentOperations'
 import { useAppointmentFilters } from './appointments/useAppointmentFilters'
+import { useCalendarManagement } from './appointments/useCalendarManagement'
 
 export function useAppointments(accessToken: string | null, isGoogleSignedIn: boolean) {
   // Always call hooks in the same order
@@ -36,6 +37,13 @@ export function useAppointments(accessToken: string | null, isGoogleSignedIn: bo
     cancelledAppointments
   } = appointmentFilters
 
+  const calendarManagement = useCalendarManagement(accessToken, doctorCalendars, fetchAppointments)
+  const {
+    handleCreateCalendar,
+    handleDeleteCalendar,
+    handleAddHolidaysToAll
+  } = calendarManagement
+
   return {
     appointments,
     doctorCalendars,
@@ -53,5 +61,9 @@ export function useAppointments(accessToken: string | null, isGoogleSignedIn: bo
     reactivateAppointment,
     addAppointment,
     markAsCompleted,
+    // Calendar management
+    handleCreateCalendar,
+    handleDeleteCalendar,
+    handleAddHolidaysToAll
   }
 }

@@ -14,6 +14,7 @@ export default function Dashboard() {
     isGoogleInitialized,
     isGoogleSignedIn,
     currentGoogleUser,
+    accessToken,
     appointments,
     doctorCalendars,
     todayAppointments,
@@ -34,7 +35,11 @@ export default function Dashboard() {
     handleRescheduleAppointment,
     handleCancelAppointment,
     handleReactivateAppointment,
-    handleAddAppointment
+    handleAddAppointment,
+    // Calendar management
+    handleCreateCalendar,
+    handleDeleteCalendar,
+    handleAddHolidaysToAll
   } = useDashboardState()
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -61,6 +66,7 @@ export default function Dashboard() {
           loading={loading}
           error={error}
           currentGoogleUser={currentGoogleUser}
+          accessToken={accessToken}
           appointments={appointments}
           doctorCalendars={doctorCalendars}
           doctorFilter={doctorFilter}
@@ -86,6 +92,10 @@ export default function Dashboard() {
           onAddAppointment={handleAddAppointment}
           isSettingsOpen={isSettingsOpen}
           onSettingsChange={setIsSettingsOpen}
+          // Calendar management
+          onCreateCalendar={handleCreateCalendar}
+          onDeleteCalendar={handleDeleteCalendar}
+          onAddHolidaysToAll={handleAddHolidaysToAll}
         />
       </TooltipProvider>
     </ThemeProvider>

@@ -1,7 +1,9 @@
+
 import { CalendarEvent, Appointment } from '@/types/appointment'
 import { CalendarListService } from './google/calendarListService'
 import { EventsService } from './google/eventsService'
 import { AppointmentOperationsService } from './google/appointmentOperationsService'
+import { CalendarManagementService, CreateCalendarRequest, CalendarResource } from './google/calendarManagementService'
 import { convertToAppointment } from './google/appointmentUtils'
 
 export interface CalendarListEntry {
@@ -14,6 +16,7 @@ export class GoogleCalendarService {
   private calendarListService = new CalendarListService()
   private eventsService = new EventsService()
   private appointmentOperationsService = new AppointmentOperationsService()
+  private calendarManagementService = new CalendarManagementService()
 
   async fetchCalendarList(accessToken: string | null): Promise<CalendarListEntry[]> {
     return this.calendarListService.fetchCalendarList(accessToken)
@@ -61,6 +64,19 @@ export class GoogleCalendarService {
 
   async reactivateAppointment(accessToken: string | null, calendarIds: string[], eventId: string): Promise<void> {
     return this.appointmentOperationsService.reactivateAppointment(accessToken, calendarIds, eventId)
+  }
+
+  // Calendar management methods
+  async createCalendar(accessToken: string | null, calendarData: CreateCalendarRequest): Promise<CalendarResource> {
+    return this.calendarManagementService.createCalendar(accessToken, calendarData)
+  }
+
+  async deleteCalendar(accessToken: string | null, calendarId: string): Promise<void> {
+    return this.calendarManagementService.deleteCalendar(accessToken, calendarId)
+  }
+
+  async addHolidaysToExistingCalendars(accessToken: string | null, calendarIds: string[]): Promise<void> {
+    return this.calendarManagementService.addHolidaysToExistingCalendars(accessToken, calendarIds)
   }
 
   convertToAppointment(event: CalendarEvent, doctorEmail: string): Appointment {

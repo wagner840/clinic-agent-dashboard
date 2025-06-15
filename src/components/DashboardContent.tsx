@@ -1,4 +1,3 @@
-
 import { DashboardStats } from '@/components/DashboardStats'
 import { DashboardHeader } from '@/components/DashboardHeader'
 import { GoogleAuthAlerts } from '@/components/GoogleAuthAlerts'
@@ -45,6 +44,10 @@ interface DashboardContentProps {
   onCancelAppointment: (appointment: Appointment) => Promise<void>
   onReactivateAppointment: (appointment: Appointment) => Promise<void>
   onAddAppointment: (appointmentData: any, calendarId: string) => Promise<string>
+  onCreateCalendar: (calendarName: string) => Promise<void>
+  onDeleteCalendar: (calendarId: string) => Promise<void>
+  onAddHolidaysToAll: () => Promise<void>
+  accessToken: string | null
   isSettingsOpen: boolean
   onSettingsChange: (isOpen: boolean) => void
 }
@@ -78,11 +81,15 @@ export function DashboardContent({
   onCancelAppointment,
   onReactivateAppointment,
   onAddAppointment,
+  onCreateCalendar,
+  onDeleteCalendar,
+  onAddHolidaysToAll,
+  accessToken,
   isSettingsOpen,
   onSettingsChange
 }: DashboardContentProps) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <DashboardHeader
         isGoogleInitialized={isGoogleInitialized}
         isGoogleSignedIn={isGoogleSignedIn}
@@ -176,6 +183,10 @@ export function DashboardContent({
         isOpen={isSettingsOpen}
         onOpenChange={onSettingsChange}
         doctorCalendars={doctorCalendars}
+        onCreateCalendar={onCreateCalendar}
+        onDeleteCalendar={onDeleteCalendar}
+        onAddHolidaysToAll={onAddHolidaysToAll}
+        accessToken={accessToken}
       />
     </div>
   )

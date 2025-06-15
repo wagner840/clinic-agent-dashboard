@@ -13,23 +13,89 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { useTheme } from "next-themes"
 import { CalendarListEntry } from "@/services/googleCalendar"
-import { Trash2 } from 'lucide-react'
+import { Trash2, Plus, Calendar } from 'lucide-react'
+import { useState } from 'react'
+import { toast } from "sonner"
 
 interface SettingsSheetProps {
   isOpen: boolean
   onOpenChange: (isOpen: boolean) => void
   doctorCalendars: CalendarListEntry[]
-  // TODO: Implement these handlers
-  // onAddCalendar: (calendarId: string) => void
-  // onDeleteCalendar: (calendarId: string) => void
+  onCreateCalendar: (calendarName: string) => Promise<void>
+  onDeleteCalendar: (calendarId: string) => Promise<void>
+  onAddHolidaysToAll: () => Promise<void>
+  accessToken: string | null
 }
 
 export function SettingsSheet({
   isOpen,
   onOpenChange,
   doctorCalendars,
+  onCreateCalendar,
+  onDeleteCalendar,
+  onAddHolidaysToAll,
+  accessToken
 }: SettingsSheetProps) {
   const { theme, setTheme } = useTheme()
+  const [newCalendarName, setNewCalendarName] = useState('')
+  const [isCreating, setIsCreating] = useState(false)
+  const [isAddingHolidays, setIsAddingHolidays] = useState(false)
+
+  const handleCreateCalendar = async () => {
+    if (!newCalendarName.trim()) {
+      toast.error('Por favor, insira um nome para a agenda')
+      return
+    }
+
+    if (!accessToken) {
+      toast.error('Você precisa estar conectado ao Google para criar agendas')
+      return
+    }
+
+    setIsCreating(true)
+    try {
+      await onCreateCalendar(newCalendarName.trim())
+      setNewCalendarName('')
+      toast.success('Agenda criada com sucesso!')
+    } catch (error) {
+      console.error('Erro ao criar agenda:', error)
+      toast.error('Erro ao criar agenda. Verifique suas permissões.')
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
+  const handleDeleteCalendar = async (calendarId: string, calendarName: string) => {
+    if (!confirm(`Tem certeza que deseja excluir a agenda "${calendarName}"? Esta ação não pode ser desfeita.`)) {
+      return
+    }
+
+    try {
+      await onDeleteCalendar(calendarId)
+      toast.success('Agenda excluída com sucesso!')
+    } catch (error) {
+      console.error('Erro ao excluir agenda:', error)
+      toast.error('Erro ao excluir agenda.')
+    }
+  }
+
+  const handleAddHolidays = async () => {
+    if (doctorCalendars.length === 0) {
+      toast.error('Nenhuma agenda encontrada para adicionar feriados')
+      return
+    }
+
+    setIsAddingHolidays(true)
+    try {
+      await onAddHolidaysToAll()
+      toast.success('Feriados brasileiros adicionados a todas as agendas!')
+    } catch (error) {
+      console.error('Erro ao adicionar feriados:', error)
+      toast.error('Erro ao adicionar feriados às agendas.')
+    } finally {
+      setIsAddingHolidays(false)
+    }
+  }
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -62,16 +128,71 @@ export function SettingsSheet({
           {/* Calendar Management */}
           <div className="space-y-4">
             <h4 className="font-medium text-foreground">Gerenciar Agendas</h4>
+            
+            {/* Create New Calendar */}
             <div className="space-y-2 rounded-lg border p-4">
-              <Label htmlFor="new-calendar-id">Adicionar Nova Agenda</Label>
+              <Label htmlFor="new-calendar-name">Criar Nova Agenda</Label>
               <div className="flex space-x-2">
-                <Input id="new-calendar-id" placeholder="ID da agenda do Google" />
-                <Button disabled>Adicionar</Button>
+                <Input 
+                  id="new-calendar-name"
+                  placeholder="Nome da nova agenda (ex: Dr. João Silva)"
+                  value={newCalendarName}
+                  onChange={(e) => setNewCalendarName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreateCalendar()}
+                />
+                <Button 
+                  onClick={handleCreateCalendar}
+                  disabled={isCreating || !accessToken}
+                >
+                  {isCreating ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Criando...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Criar
+                    </>
+                  )}
+                </Button>
               </div>
                <p className="text-xs text-muted-foreground pt-1">
-                Cole o ID da agenda do Google que você deseja sincronizar.
+                A agenda será criada no seu Google Calendar com os feriados brasileiros incluídos.
               </p>
             </div>
+
+            {/* Add Holidays to All Calendars */}
+            <div className="space-y-2 rounded-lg border p-4">
+              <Label>Feriados Brasileiros</Label>
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-muted-foreground">
+                    Adicionar feriados brasileiros de 2025 a todas as agendas existentes.
+                  </p>
+                </div>
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddHolidays}
+                  disabled={isAddingHolidays || doctorCalendars.length === 0}
+                >
+                  {isAddingHolidays ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      <span>Adicionando...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Adicionar
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Connected Calendars */}
             <div className="space-y-2">
               <Label>Agendas Conectadas</Label>
               {doctorCalendars.length > 0 ? (
@@ -82,7 +203,12 @@ export function SettingsSheet({
                         <p className="text-sm font-medium truncate">{cal.summary}</p>
                         <p className="text-xs text-muted-foreground break-all">{cal.id}</p>
                       </div>
-                      <Button variant="ghost" size="icon" disabled>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => handleDeleteCalendar(cal.id, cal.summary)}
+                        disabled={!accessToken}
+                      >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
