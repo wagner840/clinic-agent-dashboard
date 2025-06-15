@@ -25,7 +25,7 @@ export function useAppointmentData(
 
     try {
       const { error } = await supabase
-        .from('appointments')
+        .from('appointments' as any)
         .upsert({
           id: appointment.id,
           user_id: user.id,
@@ -127,7 +127,7 @@ export function useAppointmentData(
 
       // Fetch status updates from Supabase
       const { data: supabaseAppointments, error: supabaseError } = await supabase
-        .from('appointments')
+        .from('appointments' as any)
         .select('id, status')
         .eq('user_id', user.id)
 
@@ -136,7 +136,7 @@ export function useAppointmentData(
       }
 
       const statusMap = new Map(
-        supabaseAppointments?.map(apt => [apt.id, apt.status]) || []
+        (supabaseAppointments as any[])?.map(apt => [apt.id, apt.status]) || []
       )
 
       // Update appointments with Supabase status

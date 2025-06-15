@@ -9,6 +9,60 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          created_at: string
+          description: string | null
+          doctor_email: string
+          doctor_name: string
+          end_time: string
+          id: string
+          patient_email: string | null
+          patient_name: string
+          patient_phone: string | null
+          start_time: string
+          status: string
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          doctor_email: string
+          doctor_name: string
+          end_time: string
+          id: string
+          patient_email?: string | null
+          patient_name: string
+          patient_phone?: string | null
+          start_time: string
+          status?: string
+          title: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          doctor_email?: string
+          doctor_name?: string
+          end_time?: string
+          id?: string
+          patient_email?: string | null
+          patient_name?: string
+          patient_phone?: string | null
+          start_time?: string
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       n8n_fila_mensagens: {
         Row: {
           id: number

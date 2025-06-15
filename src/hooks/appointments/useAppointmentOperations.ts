@@ -19,7 +19,7 @@ export function useAppointmentOperations(
 
     try {
       const { error } = await supabase
-        .from('appointments')
+        .from('appointments' as any)
         .update({ status })
         .eq('id', appointmentId)
         .eq('user_id', user.id)
@@ -42,7 +42,7 @@ export function useAppointmentOperations(
       
       // Update appointment in Supabase
       const { error } = await supabase
-        .from('appointments')
+        .from('appointments' as any)
         .update({ 
           start_time: newStart.toISOString(),
           end_time: newEnd.toISOString()
