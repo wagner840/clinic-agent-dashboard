@@ -1,8 +1,8 @@
 
 import { Badge } from '@/components/ui/badge'
-import { Clock, User, Phone } from 'lucide-react'
+import { Clock, User, Phone, Calendar } from 'lucide-react'
 import { Appointment } from '@/types/appointment'
-import { formatTime } from '@/utils/dateFormatters'
+import { formatTime, formatShortDate } from '@/utils/dateFormatters'
 import { getStatusColor, getStatusText, getTypeText } from '@/utils/appointmentUtils'
 
 interface AppointmentDetailsProps {
@@ -17,6 +17,10 @@ export function AppointmentDetails({ appointment }: AppointmentDetailsProps) {
           <h3 className="font-semibold text-sm text-gray-900 mb-1">
             {appointment.patient.name}
           </h3>
+          <div className="flex items-center text-xs text-gray-600 mb-1">
+            <Calendar className="h-3 w-3 mr-1" />
+            <span>{formatShortDate(appointment.start)}</span>
+          </div>
           <div className="flex items-center text-xs text-gray-600 mb-2">
             <Clock className="h-3 w-3 mr-1" />
             <span>

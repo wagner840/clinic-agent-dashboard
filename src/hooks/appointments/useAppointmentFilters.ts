@@ -39,15 +39,20 @@ export function useAppointmentFilters(appointments: Appointment[]) {
   }, [appointments])
 
   const getUpcomingAppointments = useMemo(() => {
-    const now = new Date()
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setHours(0, 0, 0, 0)
+    
     const filtered = appointments.filter(apt => {
-      const isFuture = new Date(apt.start) > now
+      const aptDate = new Date(apt.start)
+      const isFuture = aptDate >= tomorrow
       const notCancelled = apt.status !== 'cancelled'
       
       console.log('🔮 Upcoming filter check:', {
         appointment: apt.patient.name,
         start: apt.start,
-        now,
+        tomorrow: tomorrow.toDateString(),
+        aptDate: aptDate.toDateString(),
         isFuture,
         status: apt.status,
         notCancelled,
