@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -80,10 +79,6 @@ export function ClinicChartsModal({
                 )}
               </DialogDescription>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="ml-4 -mt-2 -mr-2 sm:mt-0 sm:-mr-0">
-              <X className="h-4 w-4" />
-              <span className="sr-only">Fechar</span>
-            </Button>
           </div>
         </DialogHeader>
 
