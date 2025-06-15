@@ -10,13 +10,15 @@ interface AppointmentCardProps {
   onMarkAsCompleted: (appointment: Appointment) => void
   onCancelAppointment: (appointment: Appointment) => Promise<void>
   onReactivateAppointment: (appointment: Appointment) => Promise<void>
+  onDeleteAppointment?: (appointment: Appointment) => Promise<void>
 }
 
 export function AppointmentCard({ 
   appointment, 
   onMarkAsCompleted, 
   onCancelAppointment,
-  onReactivateAppointment
+  onReactivateAppointment,
+  onDeleteAppointment
 }: AppointmentCardProps) {
   const isCompleted = appointment.status === 'completed'
   const isCancelled = appointment.status === 'cancelled'
@@ -27,6 +29,7 @@ export function AppointmentCard({
       onMarkAsCompleted={onMarkAsCompleted}
       onCancelAppointment={onCancelAppointment}
       onReactivateAppointment={onReactivateAppointment}
+      onDeleteAppointment={onDeleteAppointment}
     >
       <Card className={`
         transition-all duration-200 cursor-pointer

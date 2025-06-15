@@ -82,4 +82,15 @@ export class AppointmentOperationsService {
     await this.eventsService.updateEvent(accessToken, eventInfo.calendar, eventId, { status: 'confirmed' })
     console.log(`Event ${eventId} reactivated successfully in calendar ${eventInfo.calendar}`)
   }
+
+  async deleteAppointment(accessToken: string | null, calendarIds: string[], eventId: string): Promise<void> {
+    const eventInfo = await this.eventsService.findEventInCalendars(accessToken, eventId, calendarIds)
+    
+    if (!eventInfo) {
+      throw new Error('Evento não encontrado em nenhum calendário')
+    }
+
+    await this.eventsService.deleteEvent(accessToken, eventInfo.calendar, eventId)
+    console.log(`Event ${eventId} deleted successfully from calendar ${eventInfo.calendar}`)
+  }
 }

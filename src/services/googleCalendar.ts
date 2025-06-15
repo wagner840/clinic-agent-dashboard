@@ -66,6 +66,10 @@ export class GoogleCalendarService {
     return this.appointmentOperationsService.reactivateAppointment(accessToken, calendarIds, eventId)
   }
 
+  async deleteAppointment(accessToken: string | null, calendarIds: string[], eventId: string): Promise<void> {
+    return this.appointmentOperationsService.deleteAppointment(accessToken, calendarIds, eventId)
+  }
+
   // Calendar management methods
   async createCalendar(accessToken: string | null, calendarData: CreateCalendarRequest): Promise<CalendarResource> {
     return this.calendarManagementService.createCalendar(accessToken, calendarData)

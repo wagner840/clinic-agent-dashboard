@@ -1,5 +1,5 @@
 
-import { CheckCircle, MoreVertical, XCircle, RotateCcw } from 'lucide-react'
+import { CheckCircle, MoreVertical, XCircle, RotateCcw, Trash2 } from 'lucide-react'
 import {
   ContextMenu,
   ContextMenuContent,
@@ -20,6 +20,7 @@ interface AppointmentContextMenuProps {
   onMarkAsCompleted: (appointment: Appointment) => void
   onCancelAppointment: (appointment: Appointment) => Promise<void>
   onReactivateAppointment: (appointment: Appointment) => Promise<void>
+  onDeleteAppointment?: (appointment: Appointment) => Promise<void>
   children: React.ReactNode
 }
 
@@ -28,9 +29,10 @@ export function AppointmentContextMenu({
   onMarkAsCompleted, 
   onCancelAppointment,
   onReactivateAppointment,
+  onDeleteAppointment,
   children 
 }: AppointmentContextMenuProps) {
-  const handleStatusChange = async (action: 'completed' | 'cancelled' | 'reactivate') => {
+  const handleStatusChange = async (action: 'completed' | 'cancelled' | 'reactivate' | 'delete') => {
     try {
       switch (action) {
         case 'completed':
@@ -49,6 +51,15 @@ export function AppointmentContextMenu({
             title: 'Agendamento reativado',
             description: `${appointment.patient.name} foi reativado com sucesso.`,
           })
+          break
+        case 'delete':
+          if (onDeleteAppointment) {
+            await onDeleteAppointment(appointment)
+            toast({
+              title: 'Agendamento excluído',
+              description: `${appointment.patient.name} foi excluído permanentemente.`,
+            })
+          }
           break
       }
     } catch (error) {
@@ -103,13 +114,27 @@ export function AppointmentContextMenu({
         )}
         
         {isCancelled && (
-          <ContextMenuItem
-            onClick={() => handleStatusChange('reactivate')}
-            className="cursor-pointer text-blue-600"
-          >
-            <RotateCcw className="mr-2 h-4 w-4" />
-            <span>Reativar Agendamento</span>
-          </ContextMenuItem>
+          <>
+            <ContextMenuItem
+              onClick={() => handleStatusChange('reactivate')}
+              className="cursor-pointer text-blue-600"
+            >
+              <RotateCcw className="mr-2 h-4 w-4" />
+              <span>Reativar Agendamento</span>
+            </ContextMenuItem>
+            {onDeleteAppointment && (
+              <>
+                <ContextMenuSeparator />
+                <ContextMenuItem
+                  onClick={() => handleStatusChange('delete')}
+                  className="cursor-pointer text-red-600"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  <span>Excluir Permanentemente</span>
+                </ContextMenuItem>
+              </>
+            )}
+          </>
         )}
 
         {isCompleted && (

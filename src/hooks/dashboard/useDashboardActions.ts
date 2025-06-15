@@ -6,6 +6,7 @@ interface DashboardActionsConfig {
   rescheduleAppointment: (id: string, newStart: Date, newEnd: Date) => Promise<void>
   cancelAppointment: (id: string) => Promise<void>
   reactivateAppointment: (id: string) => Promise<void>
+  deleteAppointment: (id: string) => Promise<void>
   addAppointment: (appointmentData: any, calendarId: string) => Promise<string>
   markAsCompleted: (id: string) => Promise<void>
   handleCreateCalendar: (calendarName: string) => Promise<void>
@@ -19,6 +20,7 @@ export function useDashboardActions(config: DashboardActionsConfig) {
     rescheduleAppointment,
     cancelAppointment,
     reactivateAppointment,
+    deleteAppointment,
     addAppointment,
     markAsCompleted,
     handleCreateCalendar,
@@ -45,6 +47,10 @@ export function useDashboardActions(config: DashboardActionsConfig) {
     await reactivateAppointment(appointment.id)
   }, [reactivateAppointment])
 
+  const handleDeleteAppointment = useCallback(async (appointment: Appointment) => {
+    await deleteAppointment(appointment.id)
+  }, [deleteAppointment])
+
   const handleAddAppointment = useCallback(async (appointmentData: any, calendarId: string) => {
     return await addAppointment(appointmentData, calendarId)
   }, [addAppointment])
@@ -54,6 +60,7 @@ export function useDashboardActions(config: DashboardActionsConfig) {
     handleRescheduleAppointment,
     handleCancelAppointment,
     handleReactivateAppointment,
+    handleDeleteAppointment,
     handleAddAppointment,
     handleCreateCalendar,
     handleDeleteCalendar,

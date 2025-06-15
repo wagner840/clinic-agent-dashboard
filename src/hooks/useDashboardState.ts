@@ -41,12 +41,15 @@ export function useDashboardState() {
     rescheduleAppointment,
     cancelAppointment,
     reactivateAppointment,
+    deleteAppointment,
     addAppointment,
     markAsCompleted,
     // Calendar management
     handleCreateCalendar,
     handleDeleteCalendar,
-    handleAddHolidaysToAll
+    handleAddHolidaysToAll,
+    // Cancelled appointment cleanup
+    manualCleanupCancelledAppointments
   } = appointmentsResult
 
   const [doctorFilter, setDoctorFilter] = useState('all')
@@ -70,6 +73,7 @@ export function useDashboardState() {
     rescheduleAppointment,
     cancelAppointment,
     reactivateAppointment,
+    deleteAppointment,
     addAppointment,
     markAsCompleted,
     handleCreateCalendar,
@@ -141,10 +145,13 @@ export function useDashboardState() {
     handleRescheduleAppointment: dashboardActions.handleRescheduleAppointment,
     handleCancelAppointment: dashboardActions.handleCancelAppointment,
     handleReactivateAppointment: dashboardActions.handleReactivateAppointment,
+    handleDeleteAppointment: dashboardActions.handleDeleteAppointment,
     handleAddAppointment: dashboardActions.handleAddAppointment,
     // Calendar management
     handleCreateCalendar: dashboardActions.handleCreateCalendar,
     handleDeleteCalendar: dashboardActions.handleDeleteCalendar,
-    handleAddHolidaysToAll: dashboardActions.handleAddHolidaysToAll
+    handleAddHolidaysToAll: dashboardActions.handleAddHolidaysToAll,
+    // Cancelled appointment cleanup
+    manualCleanupCancelledAppointments
   }
 }

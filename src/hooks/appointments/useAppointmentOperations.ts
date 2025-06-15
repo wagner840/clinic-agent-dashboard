@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react'
 import { GoogleCalendarService } from '@/services/googleCalendar'
 import { supabase } from '@/integrations/supabase/client'
@@ -30,6 +31,26 @@ export function useAppointmentOperations(
       }
     } catch (error) {
       console.error('Error updating appointment status in Supabase:', error)
+    }
+  }, [user])
+
+  const deleteAppointmentFromSupabase = useCallback(async (appointmentId: string) => {
+    if (!user) return
+
+    try {
+      const { error } = await supabase
+        .from('appointments' as any)
+        .delete()
+        .eq('id', appointmentId)
+        .eq('user_id', user.id)
+
+      if (error) {
+        console.error('Error deleting appointment from Supabase:', error)
+      } else {
+        console.log(`✅ Appointment ${appointmentId} deleted from Supabase`)
+      }
+    } catch (error) {
+      console.error('Error deleting appointment from Supabase:', error)
     }
   }, [user])
 
@@ -86,6 +107,19 @@ export function useAppointmentOperations(
     }
   }, [accessToken, user, fetchAppointments, updateAppointmentStatusInSupabase])
 
+  const deleteAppointment = useCallback(async (eventId: string) => {
+    if (!accessToken || !user) return
+
+    try {
+      await calendarService.deleteAppointment(accessToken, TARGET_CALENDAR_IDS, eventId)
+      await deleteAppointmentFromSupabase(eventId)
+      await fetchAppointments()
+    } catch (error: any) {
+      console.error('Error deleting appointment:', error)
+      throw new Error(`Erro ao excluir: ${error.message}`)
+    }
+  }, [accessToken, user, fetchAppointments, deleteAppointmentFromSupabase])
+
   const markAsCompleted = useCallback(async (eventId: string) => {
     if (!user) return
 
@@ -130,6 +164,7 @@ export function useAppointmentOperations(
     rescheduleAppointment,
     cancelAppointment,
     reactivateAppointment,
+    deleteAppointment,
     addAppointment,
     markAsCompleted
   }
