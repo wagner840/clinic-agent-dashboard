@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react'
 import { Appointment } from '@/types/appointment'
 import { GoogleCalendarService, CalendarListEntry } from '@/services/googleCalendar'
@@ -53,6 +54,14 @@ export function useAppointmentData(
     }
   }, [user])
 
+  // Função para verificar se um calendário é de feriados
+  const isHolidayCalendar = (calendarSummary: string) => {
+    const holidayKeywords = ['holiday', 'feriado', 'holidays in brazil', 'feriados']
+    return holidayKeywords.some(keyword => 
+      calendarSummary.toLowerCase().includes(keyword.toLowerCase())
+    )
+  }
+
   const fetchAppointments = useCallback(async () => {
     // Handle cases where we shouldn't fetch
     if (!isGoogleSignedIn) {
@@ -84,8 +93,17 @@ export function useAppointmentData(
     try {
       const allCalendars = await calendarService.fetchCalendarList(accessToken)
       
-      // We'll consider non-primary calendars as doctor calendars
-      const targetCalendars = allCalendars.filter(cal => !cal.primary)
+      // Filtrar calendários: não-primários E não de feriados
+      const targetCalendars = allCalendars.filter(cal => {
+        const isNotPrimary = !cal.primary
+        const isNotHoliday = !isHolidayCalendar(cal.summary || '')
+        
+        console.log(`📅 Calendar check: "${cal.summary}" - Primary: ${cal.primary}, Holiday: ${isHolidayCalendar(cal.summary || '')}, Include: ${isNotPrimary && isNotHoliday}`)
+        
+        return isNotPrimary && isNotHoliday
+      })
+      
+      console.log(`📋 Filtered calendars for appointments: ${targetCalendars.map(c => c.summary).join(', ')}`)
       setDoctorCalendars(targetCalendars);
 
       if (targetCalendars.length === 0) {
@@ -117,12 +135,24 @@ export function useAppointmentData(
             return appointment
           })
         )
+        // Filtrar apenas agendamentos com datas válidas
+        .filter(appointment => {
+          const hasValidDate = !isNaN(appointment.start.getTime()) && !isNaN(appointment.end.getTime())
+          if (!hasValidDate) {
+            console.log(`❌ Filtering out appointment with invalid date: "${appointment.title}"`)
+          }
+          return hasValidDate
+        })
         .sort((a, b) => a.start.getTime() - b.start.getTime())
       
-      console.log('🔄 Converted appointments before Supabase sync:', {
+      console.log('🔄 Converted appointments after filtering:', {
         totalConverted: convertedAppointments.length,
         statusBreakdown: convertedAppointments.reduce((acc, apt) => {
           acc[apt.status] = (acc[apt.status] || 0) + 1
+          return acc
+        }, {} as Record<string, number>),
+        doctorBreakdown: convertedAppointments.reduce((acc, apt) => {
+          acc[apt.doctor.name] = (acc[apt.doctor.name] || 0) + 1
           return acc
         }, {} as Record<string, number>)
       })
@@ -182,11 +212,15 @@ export function useAppointmentData(
         statusBreakdown: updatedAppointments.reduce((acc, apt) => {
           acc[apt.status] = (acc[apt.status] || 0) + 1
           return acc
+        }, {} as Record<string, number>),
+        doctorBreakdown: updatedAppointments.reduce((acc, apt) => {
+          acc[apt.doctor.name] = (acc[apt.doctor.name] || 0) + 1
+          return acc
         }, {} as Record<string, number>)
       })
 
       setAppointments(updatedAppointments)
-      console.log(`Carregados ${updatedAppointments.length} agendamentos, sincronizados com Supabase.`)
+      console.log(`Carregados ${updatedAppointments.length} agendamentos válidos, excluindo calendários de feriados.`)
 
     } catch (err: any) {
       console.error('Erro detalhado ao buscar eventos:', err)
