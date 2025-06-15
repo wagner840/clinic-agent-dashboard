@@ -3,8 +3,6 @@ import { useGoogleCalendarReal } from '@/hooks/useGoogleCalendarReal'
 import { DashboardStats } from '@/components/DashboardStats'
 import { DashboardHeader } from '@/components/DashboardHeader'
 import { GoogleAuthAlerts } from '@/components/GoogleAuthAlerts'
-import { AppointmentsSection } from '@/components/AppointmentsSection'
-import { useAuth } from '@/hooks/useAuth'
 
 export default function Dashboard() {
   const { 
@@ -19,20 +17,19 @@ export default function Dashboard() {
     googleSignOut,
     googleSwitchAccount,
     fetchAppointments,
-    clearError
+    clearError,
+    googleProfile
   } = useGoogleCalendarReal()
-
-  const { user } = useAuth()
 
   const todayAppointments = getTodayAppointments()
   const upcomingAppointments = getUpcomingAppointments()
-  const currentGoogleUser = isGoogleSignedIn && user ? {
-    email: user.email || '',
-    name: user.user_metadata?.full_name || user.email || 'Usuário',
-    imageUrl: user.user_metadata?.avatar_url || ''
+  const currentGoogleUser = isGoogleSignedIn && googleProfile ? {
+    email: googleProfile.getEmail(),
+    name: googleProfile.getName(),
+    imageUrl: googleProfile.getImageUrl()
   } : null
 
-  console.log('Google Calendar OAuth status:', {
+  console.log('Google Calendar OAuth status (traditional):', {
     isGoogleInitialized,
     isGoogleSignedIn,
     appointmentsCount: appointments.length,

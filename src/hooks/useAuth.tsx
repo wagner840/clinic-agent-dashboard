@@ -1,4 +1,3 @@
-
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
@@ -10,7 +9,6 @@ interface AuthContextType {
   loading: boolean
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
-  signInWithGoogle: (options?: { switchAccount?: boolean }) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -70,40 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const signInWithGoogle = async (options?: { switchAccount?: boolean }) => {
-    console.log('signInWithGoogle called with options:', options)
-    
-    cleanupAuthState();
-    try {
-      await supabase.auth.signOut({ scope: 'global' });
-    } catch (err) {
-      console.warn('Pre-Google-signin global signout failed. This is expected if no user was logged in.', err);
-    }
-
-    console.log('Attempting Google OAuth with Supabase...')
-    
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        scopes: 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events',
-        queryParams: {
-          access_type: 'offline',
-          prompt: options?.switchAccount ? 'consent select_account' : 'consent',
-        },
-        redirectTo: `${window.location.origin}`,
-      },
-    })
-    
-    if (error) {
-      console.error('Error signing in with Google:', error)
-      throw error
-    }
-    
-    console.log('Google OAuth redirect initiated successfully')
-  }
-
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signOut, signInWithGoogle }}>
+    <AuthContext.Provider value={{ user, session, loading, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   )

@@ -1,44 +1,37 @@
-
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { gapi } from 'gapi-script'
 import { Appointment } from '@/types/appointment'
 import { GoogleCalendarService } from '@/services/googleCalendar'
 import { useAuth } from './useAuth'
+import { GOOGLE_CLIENT_ID, GOOGLE_CALENDAR_SCOPES } from '@/lib/google'
 
 export function useGoogleCalendarReal() {
+  const { user, loading: authLoading } = useAuth()
+  
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { user, session, loading: authLoading, signInWithGoogle, signOut } = useAuth()
-
-  const accessToken = session?.provider_token
-  const isGoogleSignedIn = !!accessToken
+  
+  const [googleAuth, setGoogleAuth] = useState<gapi.auth2.GoogleAuth | null>(null)
+  const [isGoogleInitialized, setIsGoogleInitialized] = useState(false)
+  const [isGoogleSignedIn, setIsGoogleSignedIn] = useState(false)
+  const [accessToken, setAccessToken] = useState<string | null>(null)
+  const [googleProfile, setGoogleProfile] = useState<gapi.auth2.BasicProfile | null>(null)
+  
   const calendarService = new GoogleCalendarService()
 
-  console.log('useGoogleCalendarReal - Auth state:', {
-    user: user?.email,
-    hasSession: !!session,
-    hasProviderToken: !!accessToken,
-    providerTokenLength: accessToken?.length,
-    sessionProvider: session?.user?.app_metadata?.provider,
-    userMetadata: user?.user_metadata
-  })
-
-  const fetchAppointments = async (): Promise<void> => {
-    if (!isGoogleSignedIn || !user) {
-      console.log('Não é possível buscar agendamentos - não autenticado')
+  const fetchAppointmentsCallback = useCallback(async (token: string): Promise<void> => {
+    if (!token || !user) {
+      console.log('Não é possível buscar agendamentos - token ou usuário ausente')
       return
     }
 
-    console.log('Iniciando busca de agendamentos...', {
-      accessToken: accessToken?.substring(0, 20) + '...',
-      userEmail: user.email
-    })
-
+    console.log('Iniciando busca de agendamentos com nova auth...')
     setLoading(true)
     setError(null)
     
     try {
-      const events = await calendarService.fetchEvents(accessToken)
+      const events = await calendarService.fetchEvents(token)
       const convertedAppointments = events.map(event => 
         calendarService.convertToAppointment(event, user?.email || '')
       )
@@ -46,37 +39,86 @@ export function useGoogleCalendarReal() {
       setAppointments(convertedAppointments)
       console.log(`Carregados ${convertedAppointments.length} agendamentos do Google Calendar`)
     } catch (err: any) {
-      console.error('Erro detalhado ao buscar eventos:', {
-        error: err,
-        message: err.message,
-        status: err.status,
-        response: err.response
-      })
-      
+      console.error('Erro detalhado ao buscar eventos:', err)
       const errorMessage = err.message || 'Erro ao carregar agendamentos'
       if (err.message.includes('401') || err.message.includes('Invalid Credentials')) {
         setError('Sessão do Google expirada. Por favor, conecte novamente.')
       } else if (err.message.includes('403')) {
-        setError('Acesso negado ao Google Calendar. Verifique as permissões e configurações OAuth.')
+        setError('Acesso negado ao Google Calendar. Verifique as permissões.')
       } else {
         setError(errorMessage)
       }
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
 
   useEffect(() => {
-    console.log('useEffect triggered:', { isGoogleSignedIn, user: !!user, authLoading })
-    
-    if (isGoogleSignedIn && user && !authLoading) {
-      console.log('Conditions met, fetching appointments...')
-      fetchAppointments()
-    } else {
-      console.log('Clearing appointments - conditions not met')
-      setAppointments([])
+    const initClient = () => {
+      gapi.client.init({
+        clientId: GOOGLE_CLIENT_ID,
+        scope: GOOGLE_CALENDAR_SCOPES,
+        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest']
+      }).then(() => {
+        const authInstance = gapi.auth2.getAuthInstance()
+        setGoogleAuth(authInstance)
+        setIsGoogleInitialized(true)
+        
+        const updateSigninStatus = (signedIn: boolean) => {
+          setIsGoogleSignedIn(signedIn)
+          if (signedIn) {
+            const currentGoogleUser = authInstance.currentUser.get()
+            const authResponse = currentGoogleUser.getAuthResponse(true) // get non-expired token
+            setAccessToken(authResponse.access_token)
+            setGoogleProfile(currentGoogleUser.getBasicProfile())
+            console.log('Usuário Google conectado. Buscando agendamentos.')
+            fetchAppointmentsCallback(authResponse.access_token)
+          } else {
+            setAccessToken(null)
+            setGoogleProfile(null)
+            setAppointments([])
+            console.log('Usuário Google desconectado.')
+          }
+        }
+        
+        authInstance.isSignedIn.listen(updateSigninStatus)
+        updateSigninStatus(authInstance.isSignedIn.get())
+      }).catch(err => {
+        console.error("Erro ao inicializar o Google Client", err)
+        setError("Falha ao inicializar a integração com o Google. Verifique seu Client ID e a configuração no Google Cloud.")
+        setIsGoogleInitialized(true)
+      })
     }
-  }, [isGoogleSignedIn, user, authLoading])
+    
+    if (GOOGLE_CLIENT_ID.startsWith('YOUR_GOOGLE_CLIENT_ID_HERE')) {
+        setError("Por favor, configure seu ID de Cliente do Google no arquivo 'src/lib/google.ts'")
+        setIsGoogleInitialized(true)
+        return
+    }
+
+    gapi.load('client:auth2', initClient)
+  }, [fetchAppointmentsCallback])
+
+  const handleGoogleSignIn = async () => {
+    if (googleAuth) {
+      googleAuth.signIn().catch(err => {
+        console.error("Erro ao fazer login com Google:", err)
+        if (err.error === 'popup_closed_by_user') {
+          setError("A janela de login do Google foi fechada antes da conclusão.")
+        } else {
+          setError("Ocorreu um erro ao tentar fazer login com o Google.")
+        }
+      })
+    }
+  }
+
+  const handleGoogleSignOut = async () => {
+    if (googleAuth) {
+      googleAuth.signOut().catch(err => {
+        console.error("Erro ao fazer logout do Google:", err)
+      })
+    }
+  }
 
   const getTodayAppointments = () => {
     const today = new Date()
@@ -92,50 +134,21 @@ export function useGoogleCalendarReal() {
       .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
   }
 
-  const handleGoogleSignIn = async (): Promise<void> => {
-    console.log('Iniciando login do Google...')
-    try {
-      await signInWithGoogle()
-      console.log('Login do Google completado')
-    } catch (err) {
-      console.error('Erro no login do Google:', err)
-      setError('Erro ao conectar com Google. Tente novamente.')
-    }
-  }
-
-  const handleGoogleSignOut = async (): Promise<void> => {
-    console.log('Iniciando logout do Google...')
-    try {
-      await signOut()
-      console.log('Logout do Google completado')
-    } catch (err) {
-      console.error('Erro no logout do Google:', err)
-    }
-  }
-
-  const handleGoogleSwitchAccount = async (): Promise<void> => {
-    console.log('Iniciando troca de conta do Google...')
-    try {
-      await signInWithGoogle({ switchAccount: true })
-      console.log('Troca de conta do Google completada')
-    } catch (err) {
-      console.error('Erro na troca de conta do Google:', err)
-      setError('Erro ao trocar conta do Google. Tente novamente.')
-    }
-  }
-
   return {
     appointments,
-    loading: loading || authLoading,
+    loading: loading || authLoading || !isGoogleInitialized,
     error,
-    fetchAppointments,
+    fetchAppointments: () => {
+      if (accessToken) fetchAppointmentsCallback(accessToken)
+    },
     getTodayAppointments,
     getUpcomingAppointments,
-    isGoogleInitialized: !authLoading,
+    isGoogleInitialized,
     isGoogleSignedIn,
     googleSignIn: handleGoogleSignIn,
     googleSignOut: handleGoogleSignOut,
-    googleSwitchAccount: handleGoogleSwitchAccount,
+    googleSwitchAccount: handleGoogleSignIn,
     clearError: () => setError(null),
+    googleProfile,
   }
 }
