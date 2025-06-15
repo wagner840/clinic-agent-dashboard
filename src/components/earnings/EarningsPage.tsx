@@ -5,9 +5,12 @@ import { DoctorEarningsTable } from './DoctorEarningsTable'
 import { ClinicTotalCard } from './ClinicTotalCard'
 import { HistoricalRecalculationButton } from './HistoricalRecalculationButton'
 import { Button } from '@/components/ui/button'
-import { RefreshCw, TrendingUp } from 'lucide-react'
+import { RefreshCw, TrendingUp, AlertCircle } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
+import { supabase } from '@/integrations/supabase/client'
 
 export function EarningsPage() {
+  const { user } = useAuth()
   const {
     totalEarnings,
     loading,
@@ -20,6 +23,54 @@ export function EarningsPage() {
   useEffect(() => {
     fetchTotalEarnings()
   }, [fetchTotalEarnings])
+
+  useEffect(() => {
+    // Debug: verificar agendamentos concluídos e pagamentos
+    const debugData = async () => {
+      if (!user) return
+
+      console.log('🔍 Debugging earnings data...')
+      
+      // Buscar agendamentos concluídos
+      const { data: completedAppointments, error: apptError } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'completed')
+
+      if (apptError) {
+        console.error('Error fetching completed appointments:', apptError)
+      } else {
+        console.log('📅 Completed appointments:', completedAppointments?.length || 0, completedAppointments)
+      }
+
+      // Buscar pagamentos
+      const { data: payments, error: paymentError } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('user_id', user.id)
+
+      if (paymentError) {
+        console.error('Error fetching payments:', paymentError)
+      } else {
+        console.log('💰 Payments:', payments?.length || 0, payments)
+      }
+
+      // Buscar ganhos salvos
+      const { data: earnings, error: earningsError } = await supabase
+        .from('doctor_total_earnings')
+        .select('*')
+        .eq('user_id', user.id)
+
+      if (earningsError) {
+        console.error('Error fetching earnings:', earningsError)
+      } else {
+        console.log('📊 Saved earnings:', earnings?.length || 0, earnings)
+      }
+    }
+
+    debugData()
+  }, [user])
 
   const handleRefresh = () => {
     fetchTotalEarnings()
@@ -46,6 +97,22 @@ export function EarningsPage() {
           </Button>
         </div>
       </div>
+
+      {/* Debug Info */}
+      {totalEarnings.length === 0 && !loading && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-center space-x-2">
+            <AlertCircle className="h-5 w-5 text-yellow-600" />
+            <div>
+              <h3 className="font-medium text-yellow-800">Nenhum ganho encontrado</h3>
+              <p className="text-sm text-yellow-700 mt-1">
+                Se você tem agendamentos concluídos mas não vê ganhos aqui, use o botão "Recalcular Histórico" 
+                para processar pagamentos de agendamentos anteriores à implementação do sistema de relatórios.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Totais da Clínica */}
       <ClinicTotalCard totals={clinicTotals} />

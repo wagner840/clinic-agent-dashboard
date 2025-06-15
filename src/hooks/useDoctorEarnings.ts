@@ -177,6 +177,7 @@ export function useDoctorEarnings() {
         return
       }
 
+      console.log('📊 Daily earnings fetched:', data?.length || 0, 'records')
       setDailyEarnings(data || [])
     } catch (error) {
       console.error('Error fetching daily earnings:', error)
@@ -186,10 +187,15 @@ export function useDoctorEarnings() {
   }, [user, toast])
 
   const fetchTotalEarnings = useCallback(async () => {
-    if (!user) return
+    if (!user) {
+      console.log('⚠️ No user found, skipping earnings fetch')
+      return
+    }
 
     setLoading(true)
     try {
+      console.log('🔍 Fetching total earnings for user:', user.id)
+      
       const { data, error } = await supabase
         .from('doctor_total_earnings')
         .select('*')
@@ -197,7 +203,7 @@ export function useDoctorEarnings() {
         .order('total_amount', { ascending: false })
 
       if (error) {
-        console.error('Error fetching total earnings:', error)
+        console.error('❌ Error fetching total earnings:', error)
         toast({
           title: 'Erro ao carregar ganhos totais',
           description: error.message,
@@ -206,16 +212,25 @@ export function useDoctorEarnings() {
         return
       }
 
+      console.log('📊 Total earnings fetched:', {
+        recordsCount: data?.length || 0,
+        records: data?.map(d => ({
+          doctorName: d.doctor_name,
+          totalAmount: d.total_amount,
+          totalAppointments: d.total_appointments
+        }))
+      })
+
       setTotalEarnings(data || [])
     } catch (error) {
-      console.error('Error fetching total earnings:', error)
+      console.error('❌ Error fetching total earnings:', error)
     } finally {
       setLoading(false)
     }
   }, [user, toast])
 
   const getClinicTotals = useCallback(() => {
-    return totalEarnings.reduce((acc, doctor) => ({
+    const totals = totalEarnings.reduce((acc, doctor) => ({
       totalAmount: acc.totalAmount + doctor.total_amount,
       totalAppointments: acc.totalAppointments + doctor.total_appointments,
       insuranceAmount: acc.insuranceAmount + doctor.insurance_amount,
@@ -230,6 +245,9 @@ export function useDoctorEarnings() {
       privateAmount: 0,
       privateAppointments: 0
     })
+
+    console.log('🏥 Clinic totals calculated:', totals)
+    return totals
   }, [totalEarnings])
 
   return {
