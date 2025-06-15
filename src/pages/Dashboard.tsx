@@ -13,6 +13,8 @@ export default function Dashboard() {
     appointments,
     todayAppointments,
     upcomingAppointments,
+    pastAppointments,
+    completedAppointments,
     cancelledAppointments,
     loading,
     error,
@@ -38,7 +40,9 @@ export default function Dashboard() {
     loading,
     error,
     currentUser: currentGoogleUser,
-    appointmentsCount: appointments.length
+    appointmentsCount: appointments.length,
+    pastAppointmentsCount: pastAppointments.length,
+    completedAppointmentsCount: completedAppointments.length
   })
 
   return (
@@ -52,6 +56,8 @@ export default function Dashboard() {
         appointments={appointments}
         todayAppointments={todayAppointments}
         upcomingAppointments={upcomingAppointments}
+        pastAppointments={pastAppointments}
+        completedAppointments={completedAppointments}
         cancelledAppointments={cancelledAppointments}
         paymentAppointment={paymentAppointment}
         onGoogleAuth={handleGoogleAuth}

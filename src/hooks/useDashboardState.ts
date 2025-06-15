@@ -27,6 +27,8 @@ export function useDashboardState() {
     fetchAppointments,
     getTodayAppointments,
     getUpcomingAppointments,
+    getPastAppointments,
+    getCompletedAppointments,
     getCancelledAppointments,
     clearError: clearAppointmentsError,
     rescheduleAppointment,
@@ -45,6 +47,8 @@ export function useDashboardState() {
 
   const todayAppointments = getTodayAppointments()
   const upcomingAppointments = getUpcomingAppointments()
+  const pastAppointments = getPastAppointments()
+  const completedAppointments = getCompletedAppointments()
   const cancelledAppointments = getCancelledAppointments()
   
   const currentGoogleUser = isGoogleSignedIn && googleProfile ? {
@@ -114,6 +118,8 @@ export function useDashboardState() {
     appointments,
     todayAppointments,
     upcomingAppointments,
+    pastAppointments,
+    completedAppointments,
     cancelledAppointments,
     
     // Loading & Error states

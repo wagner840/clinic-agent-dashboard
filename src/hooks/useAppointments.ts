@@ -25,6 +25,8 @@ export function useAppointments(accessToken: string | null, isGoogleSignedIn: bo
   const {
     todayAppointments,
     upcomingAppointments,
+    pastAppointments,
+    completedAppointments,
     cancelledAppointments
   } = useAppointmentFilters(appointments)
 
@@ -36,6 +38,8 @@ export function useAppointments(accessToken: string | null, isGoogleSignedIn: bo
     fetchAppointments,
     getTodayAppointments: () => todayAppointments,
     getUpcomingAppointments: () => upcomingAppointments,
+    getPastAppointments: () => pastAppointments,
+    getCompletedAppointments: () => completedAppointments,
     getCancelledAppointments: () => cancelledAppointments,
     rescheduleAppointment,
     cancelAppointment,

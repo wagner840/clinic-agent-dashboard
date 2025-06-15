@@ -3,6 +3,8 @@ import { DashboardStats } from '@/components/DashboardStats'
 import { DashboardHeader } from '@/components/DashboardHeader'
 import { GoogleAuthAlerts } from '@/components/GoogleAuthAlerts'
 import { AppointmentsSection } from '@/components/AppointmentsSection'
+import { PastAppointmentsTable } from '@/components/PastAppointmentsTable'
+import { CompletedAppointmentsTable } from '@/components/CompletedAppointmentsTable'
 import { PaymentDialog } from '@/components/PaymentDialog'
 import { Appointment } from '@/types/appointment'
 
@@ -19,6 +21,8 @@ interface DashboardContentProps {
   appointments: Appointment[]
   todayAppointments: Appointment[]
   upcomingAppointments: Appointment[]
+  pastAppointments: Appointment[]
+  completedAppointments: Appointment[]
   cancelledAppointments: Appointment[]
   paymentAppointment: Appointment | null
   onGoogleAuth: () => Promise<void>
@@ -45,6 +49,8 @@ export function DashboardContent({
   appointments,
   todayAppointments,
   upcomingAppointments,
+  pastAppointments,
+  completedAppointments,
   cancelledAppointments,
   paymentAppointment,
   onGoogleAuth,
@@ -105,6 +111,19 @@ export function DashboardContent({
           onReactivateAppointment={onReactivateAppointment}
           onAddAppointment={onAddAppointment}
         />
+
+        {isGoogleSignedIn && !loading && (
+          <div className="mt-8 space-y-6">
+            <PastAppointmentsTable
+              appointments={pastAppointments}
+              onMarkAsCompleted={onMarkAsCompleted}
+            />
+            
+            <CompletedAppointmentsTable
+              appointments={completedAppointments}
+            />
+          </div>
+        )}
       </main>
 
       <PaymentDialog
