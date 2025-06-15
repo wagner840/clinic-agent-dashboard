@@ -1,16 +1,7 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Building2, DollarSign, Users, CreditCard, Shield } from 'lucide-react'
-
-interface ClinicTotals {
-  totalAmount: number
-  totalAppointments: number
-  insuranceAmount: number
-  insuranceAppointments: number
-  privateAmount: number
-  privateAppointments: number
-}
+import { ClinicTotals } from '@/types/earnings'
 
 interface ClinicTotalCardProps {
   totals: ClinicTotals

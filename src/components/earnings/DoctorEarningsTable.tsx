@@ -1,4 +1,3 @@
-
 import {
   Table,
   TableBody,
@@ -10,20 +9,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { DollarSign, TrendingUp, Calendar, User } from 'lucide-react'
-
-interface DoctorTotalEarnings {
-  id: string
-  doctor_name: string
-  doctor_email: string
-  total_amount: number
-  total_appointments: number
-  insurance_amount: number
-  insurance_appointments: number
-  private_amount: number
-  private_appointments: number
-  first_appointment_date: string | null
-  last_appointment_date: string | null
-}
+import { DoctorTotalEarnings } from '@/types/earnings'
 
 interface DoctorEarningsTableProps {
   earnings: DoctorTotalEarnings[]
