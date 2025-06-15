@@ -43,17 +43,23 @@ export function usePaymentForm() {
 
       if (paymentError) {
         console.error('❌ Error saving payment:', paymentError)
-        toast({
-          title: 'Erro ao salvar pagamento',
-          description: paymentError.message.includes('unique_payment_for_appointment') 
-            ? 'Já existe um pagamento para este agendamento.'
-            : paymentError.message,
-          variant: 'destructive',
-        })
-        return
+        // Se o pagamento já existe, podemos prosseguir para marcar o agendamento como concluído.
+        if (paymentError.message.includes('unique_payment_for_appointment')) {
+          toast({
+            title: 'Pagamento já existente',
+            description: 'Este agendamento já possui um pagamento. Finalizando a consulta.',
+          })
+        } else {
+          toast({
+            title: 'Erro ao salvar pagamento',
+            description: paymentError.message,
+            variant: 'destructive',
+          })
+          return // Parar para outros erros
+        }
+      } else {
+        console.log('✅ Payment saved successfully for appointment:', appointment.id)
       }
-
-      console.log('✅ Payment saved successfully for appointment:', appointment.id)
 
       // 2. Marcar o agendamento como concluído no Supabase
       const { error: appointmentError } = await supabase

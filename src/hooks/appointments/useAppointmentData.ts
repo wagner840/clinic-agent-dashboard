@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react'
 import { Appointment } from '@/types/appointment'
 import { GoogleCalendarService } from '@/services/googleCalendar'
@@ -129,6 +128,29 @@ export function useAppointmentData(
 
       // Sync all appointments to Supabase
       await Promise.all(convertedAppointments.map(syncAppointmentToSupabase))
+
+      // Corrigir status para agendamentos que têm pagamentos
+      const { data: paymentsData, error: paymentsError } = await supabase
+        .from('payments')
+        .select('appointment_id')
+        .eq('user_id', user.id)
+
+      if (paymentsError) {
+        console.error('Error fetching payments to sync status:', paymentsError)
+      } else if (paymentsData && paymentsData.length > 0) {
+        const paidAppointmentIds = paymentsData.map(p => p.appointment_id)
+        const { error: updateError } = await supabase
+          .from('appointments')
+          .update({ status: 'completed' })
+          .in('id', paidAppointmentIds)
+          .eq('user_id', user.id)
+        
+        if (updateError) {
+          console.error('Error updating status for paid appointments:', updateError)
+        } else {
+          console.log(`✅ Ensured ${paidAppointmentIds.length} paid appointments are marked as 'completed'.`)
+        }
+      }
 
       // Fetch status updates from Supabase
       const { data: supabaseAppointments, error: supabaseError } = await supabase
