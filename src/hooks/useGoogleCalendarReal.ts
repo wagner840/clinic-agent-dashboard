@@ -17,7 +17,6 @@ export function useGoogleCalendarReal() {
     signIn: googleSignIn,
     signOut: googleSignOut,
     switchAccount: googleSwitchAccount,
-    forceAccountSelection,
     clearError: clearGoogleError
   } = useGoogleOAuth()
 
@@ -85,8 +84,8 @@ export function useGoogleCalendarReal() {
     await googleSignOut()
   }
 
-  const handleForceAccountSelection = async (): Promise<void> => {
-    await forceAccountSelection()
+  const handleGoogleSwitchAccount = async (): Promise<void> => {
+    await googleSwitchAccount()
   }
 
   return {
@@ -101,7 +100,7 @@ export function useGoogleCalendarReal() {
     isGoogleSignedIn,
     googleSignIn: handleGoogleSignIn,
     googleSignOut: handleGoogleSignOut,
-    googleSwitchAccount: handleForceAccountSelection,
+    googleSwitchAccount: handleGoogleSwitchAccount,
     clearError: () => {
       setError(null)
       clearGoogleError()
