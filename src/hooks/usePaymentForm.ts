@@ -17,7 +17,7 @@ export function usePaymentForm() {
     setIsInsurance(false)
   }
 
-  const submitPayment = async (appointment: Appointment, onSuccess: () => void) => {
+  const submitPayment = async (appointment: Appointment, onSuccess: () => Promise<void>) => {
     if (!appointment || !user) return
 
     console.log('💰 Submitting payment for appointment:', {
@@ -80,7 +80,7 @@ export function usePaymentForm() {
         duration: 5000,
       })
       
-      onSuccess()
+      await onSuccess()
       resetForm()
 
     } catch (error: any) {

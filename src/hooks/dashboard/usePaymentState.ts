@@ -7,8 +7,8 @@ export function usePaymentState(fetchAppointments: () => Promise<void>) {
   const [paymentAppointment, setPaymentAppointment] = useState<Appointment | null>(null)
   const { toast } = useToast()
 
-  const handlePaymentSuccess = useCallback(() => {
-    fetchAppointments()
+  const handlePaymentSuccess = useCallback(async () => {
+    await fetchAppointments()
     setPaymentAppointment(null)
     toast({
       title: "Pagamento registrado",

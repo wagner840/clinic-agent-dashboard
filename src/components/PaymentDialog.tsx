@@ -18,7 +18,7 @@ interface PaymentDialogProps {
   appointment: Appointment | null
   isOpen: boolean
   onClose: () => void
-  onPaymentSuccess: () => void
+  onPaymentSuccess: () => Promise<void>
 }
 
 export function PaymentDialog({ appointment, isOpen, onClose, onPaymentSuccess }: PaymentDialogProps) {
@@ -42,8 +42,8 @@ export function PaymentDialog({ appointment, isOpen, onClose, onPaymentSuccess }
     e.preventDefault()
     if (!appointment) return
 
-    await submitPayment(appointment, () => {
-      onPaymentSuccess()
+    await submitPayment(appointment, async () => {
+      await onPaymentSuccess()
       handleClose()
     })
   }

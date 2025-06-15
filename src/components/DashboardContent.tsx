@@ -31,7 +31,7 @@ interface DashboardContentProps {
   onMarkAsCompleted: (appointment: Appointment) => void
   onRetry: () => Promise<void>
   onClearError: () => void
-  onPaymentSuccess: () => void
+  onPaymentSuccess: () => Promise<void>
   onClosePaymentDialog: () => void
   onRescheduleAppointment: (appointment: Appointment, newDate: Date) => Promise<void>
   onCancelAppointment: (appointment: Appointment) => Promise<void>
