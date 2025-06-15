@@ -52,7 +52,7 @@ export function useDashboardState() {
     reactivateAppointment,
     addAppointment,
     markAsCompleted
-  })
+  }, { setPaymentAppointment })
 
   const googleAuthHandlers = useGoogleAuthHandlers({
     isGoogleSignedIn,

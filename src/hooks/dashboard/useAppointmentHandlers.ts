@@ -11,10 +11,21 @@ interface AppointmentOperations {
   markAsCompleted: (id: string) => Promise<void>
 }
 
-export function useAppointmentHandlers(operations: AppointmentOperations) {
+interface PaymentActions {
+  setPaymentAppointment: (appointment: Appointment | null) => void
+}
+
+export function useAppointmentHandlers(operations: AppointmentOperations, paymentActions?: PaymentActions) {
   const { toast } = useToast()
 
   const handleMarkAsCompleted = useCallback(async (appointment: Appointment) => {
+    // Se temos as ações de pagamento, abre o modal de pagamento
+    if (paymentActions) {
+      paymentActions.setPaymentAppointment(appointment)
+      return
+    }
+
+    // Caso contrário, marca diretamente como concluído (fallback)
     try {
       await operations.markAsCompleted(appointment.id)
       toast({
@@ -28,7 +39,7 @@ export function useAppointmentHandlers(operations: AppointmentOperations) {
         variant: "destructive"
       })
     }
-  }, [operations.markAsCompleted, toast])
+  }, [operations.markAsCompleted, paymentActions, toast])
 
   const handleRescheduleAppointment = useCallback(async (appointment: Appointment, newDate: Date) => {
     try {

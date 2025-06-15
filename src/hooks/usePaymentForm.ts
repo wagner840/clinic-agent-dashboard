@@ -30,35 +30,68 @@ export function usePaymentForm() {
 
     setLoading(true)
 
-    const paymentData = {
-      appointment_id: appointment.id,
-      amount: parseFloat(amount),
-      is_insurance: isInsurance,
-      user_id: user.id,
-    }
+    try {
+      // 1. Salvar o pagamento
+      const paymentData = {
+        appointment_id: appointment.id,
+        amount: parseFloat(amount),
+        is_insurance: isInsurance,
+        user_id: user.id,
+      }
 
-    const { error } = await supabase.from('payments').insert(paymentData)
+      const { error: paymentError } = await supabase.from('payments').insert(paymentData)
 
-    setLoading(false)
+      if (paymentError) {
+        console.error('❌ Error saving payment:', paymentError)
+        toast({
+          title: 'Erro ao salvar pagamento',
+          description: paymentError.message.includes('unique_payment_for_appointment') 
+            ? 'Já existe um pagamento para este agendamento.'
+            : paymentError.message,
+          variant: 'destructive',
+        })
+        return
+      }
 
-    if (error) {
-      console.error('❌ Error saving payment:', error)
-      toast({
-        title: 'Erro ao salvar pagamento',
-        description: error.message.includes('unique_payment_for_appointment') 
-          ? 'Já existe um pagamento para este agendamento.'
-          : error.message,
-        variant: 'destructive',
-      })
-    } else {
       console.log('✅ Payment saved successfully for appointment:', appointment.id)
+
+      // 2. Marcar o agendamento como concluído no Supabase
+      const { error: appointmentError } = await supabase
+        .from('appointments')
+        .update({ status: 'completed' })
+        .eq('id', appointment.id)
+        .eq('user_id', user.id)
+
+      if (appointmentError) {
+        console.error('❌ Error updating appointment status:', appointmentError)
+        toast({
+          title: 'Erro ao finalizar agendamento',
+          description: 'Pagamento salvo, mas erro ao marcar como concluído.',
+          variant: 'destructive',
+        })
+        return
+      }
+
+      console.log('✅ Appointment marked as completed:', appointment.id)
+
       toast({
-        title: 'Pagamento registrado com sucesso!',
-        description: `Consulta de ${appointment.patient.name} finalizada.`,
+        title: 'Agendamento finalizado com sucesso!',
+        description: `Consulta de ${appointment.patient.name} foi finalizada e o pagamento foi registrado.`,
         duration: 5000,
       })
+      
       onSuccess()
       resetForm()
+
+    } catch (error: any) {
+      console.error('❌ Unexpected error:', error)
+      toast({
+        title: 'Erro inesperado',
+        description: 'Ocorreu um erro ao processar a finalização.',
+        variant: 'destructive',
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
