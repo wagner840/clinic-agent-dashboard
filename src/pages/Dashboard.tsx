@@ -12,6 +12,7 @@ export default function Dashboard() {
     error, 
     getTodayAppointments, 
     getUpcomingAppointments,
+    getCancelledAppointments,
     isGoogleInitialized,
     isGoogleSignedIn,
     googleSignIn,
@@ -24,6 +25,7 @@ export default function Dashboard() {
 
   const todayAppointments = getTodayAppointments()
   const upcomingAppointments = getUpcomingAppointments()
+  const cancelledAppointments = getCancelledAppointments()
   const currentGoogleUser = isGoogleSignedIn && googleProfile ? {
     email: googleProfile.getEmail(),
     name: googleProfile.getName(),
@@ -85,6 +87,7 @@ export default function Dashboard() {
         <AppointmentsSection
           todayAppointments={todayAppointments}
           upcomingAppointments={upcomingAppointments}
+          cancelledAppointments={cancelledAppointments}
           isGoogleSignedIn={isGoogleSignedIn}
           isGoogleInitialized={isGoogleInitialized}
           loading={loading}

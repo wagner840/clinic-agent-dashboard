@@ -1,5 +1,5 @@
 
-import { Calendar, Clock } from 'lucide-react'
+import { Calendar, Clock, XCircle } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { AppointmentCard } from '@/components/AppointmentCard'
@@ -8,6 +8,7 @@ import { Appointment } from '@/types/appointment'
 interface AppointmentsSectionProps {
   todayAppointments: Appointment[]
   upcomingAppointments: Appointment[]
+  cancelledAppointments: Appointment[]
   isGoogleSignedIn: boolean
   isGoogleInitialized: boolean
   loading: boolean
@@ -17,13 +18,14 @@ interface AppointmentsSectionProps {
 export function AppointmentsSection({
   todayAppointments,
   upcomingAppointments,
+  cancelledAppointments,
   isGoogleSignedIn,
   isGoogleInitialized,
   loading,
   onGoogleSignIn
 }: AppointmentsSectionProps) {
   return (
-    <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {/* Today's Appointments */}
       <Card>
         <CardHeader>
@@ -77,7 +79,7 @@ export function AppointmentsSection({
             <span>Próximos Agendamentos</span>
           </CardTitle>
           <CardDescription>
-            Próximas consultas agendadas
+            {upcomingAppointments.length} próxima(s) consulta(s) agendada(s)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -98,6 +100,45 @@ export function AppointmentsSection({
           ) : (
             <div className="space-y-4">
               {upcomingAppointments.slice(0, 5).map(appointment => (
+                <AppointmentCard 
+                  key={appointment.id} 
+                  appointment={appointment} 
+                />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Cancelled Appointments */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <XCircle className="h-5 w-5 text-red-500" />
+            <span>Agendamentos Cancelados</span>
+          </CardTitle>
+          <CardDescription>
+            {cancelledAppointments.length} consulta(s) cancelada(s)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {!isGoogleSignedIn ? (
+            <div className="text-center py-8 text-gray-500">
+              <XCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <p>Conecte o Google Calendar para ver agendamentos cancelados</p>
+            </div>
+          ) : loading ? (
+            <div className="text-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
+              Carregando...
+            </div>
+          ) : cancelledAppointments.length === 0 ? (
+            <div className="text-center py-4 text-gray-500">
+              Nenhum agendamento cancelado
+            </div>
+          ) : (
+            <div className="space-y-4 max-h-96 overflow-y-auto p-1">
+              {cancelledAppointments.slice(0, 10).map(appointment => (
                 <AppointmentCard 
                   key={appointment.id} 
                   appointment={appointment} 
