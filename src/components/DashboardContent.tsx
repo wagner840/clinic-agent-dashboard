@@ -6,6 +6,9 @@ import { PastAppointmentsTable } from '@/components/PastAppointmentsTable'
 import { CompletedAppointmentsTable } from '@/components/CompletedAppointmentsTable'
 import { PaymentDialog } from '@/components/PaymentDialog'
 import { Appointment } from '@/types/appointment'
+import { CalendarListEntry } from '@/services/googleCalendar'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
 
 interface DashboardContentProps {
   isGoogleInitialized: boolean
@@ -18,6 +21,9 @@ interface DashboardContentProps {
     imageUrl: string
   } | null
   appointments: Appointment[]
+  doctorCalendars: CalendarListEntry[]
+  doctorFilter: string
+  onDoctorFilterChange: (value: string) => void
   todayAppointments: Appointment[]
   upcomingAppointments: Appointment[]
   pastAppointments: Appointment[]
@@ -36,7 +42,7 @@ interface DashboardContentProps {
   onRescheduleAppointment: (appointment: Appointment, newDate: Date) => Promise<void>
   onCancelAppointment: (appointment: Appointment) => Promise<void>
   onReactivateAppointment: (appointment: Appointment) => Promise<void>
-  onAddAppointment: (appointmentData: any) => Promise<string>
+  onAddAppointment: (appointmentData: any, calendarId: string) => Promise<string>
 }
 
 export function DashboardContent({
@@ -46,6 +52,9 @@ export function DashboardContent({
   error,
   currentGoogleUser,
   appointments,
+  doctorCalendars,
+  doctorFilter,
+  onDoctorFilterChange,
   todayAppointments,
   upcomingAppointments,
   pastAppointments,
@@ -91,6 +100,27 @@ export function DashboardContent({
         />
 
         <div className="space-y-6 sm:space-y-8">
+          {isGoogleSignedIn && doctorCalendars.length > 0 && (
+            <div className="flex justify-start">
+              <div className="space-y-2">
+                <Label htmlFor="doctor-filter">Filtrar por Médico</Label>
+                <Select value={doctorFilter} onValueChange={onDoctorFilterChange}>
+                  <SelectTrigger id="doctor-filter" className="w-full sm:w-[280px] bg-white">
+                    <SelectValue placeholder="Selecionar médico..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Médicos</SelectItem>
+                    {doctorCalendars.map((cal) => (
+                      <SelectItem key={cal.id} value={cal.id}>
+                        {cal.summary}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
           <DashboardStats 
             totalAppointments={appointments.length}
             todayAppointments={todayAppointments.length}
@@ -104,6 +134,7 @@ export function DashboardContent({
             isGoogleSignedIn={isGoogleSignedIn}
             isGoogleInitialized={isGoogleInitialized}
             loading={loading && isGoogleSignedIn}
+            doctorCalendars={doctorCalendars}
             onGoogleSignIn={onGoogleSignIn}
             onMarkAsCompleted={onMarkAsCompleted}
             onRescheduleAppointment={onRescheduleAppointment}

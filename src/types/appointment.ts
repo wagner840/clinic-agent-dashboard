@@ -13,6 +13,7 @@ export interface Appointment {
   doctor: {
     name: string
     email: string
+    calendarId?: string
   }
   status: 'scheduled' | 'completed' | 'cancelled'
   type: 'consultation' | 'procedure' | 'follow-up'

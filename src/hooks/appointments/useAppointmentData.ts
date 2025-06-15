@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Appointment } from '@/types/appointment'
-import { GoogleCalendarService } from '@/services/googleCalendar'
+import { GoogleCalendarService, CalendarListEntry } from '@/services/googleCalendar'
 import { supabase } from '@/integrations/supabase/client'
-import { TARGET_CALENDAR_IDS } from '@/constants/appointments'
 
 const calendarService = new GoogleCalendarService()
 
@@ -15,6 +14,7 @@ export function useAppointmentData(
   isGoogleSignedIn: boolean
 ) {
   const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [doctorCalendars, setDoctorCalendars] = useState<CalendarListEntry[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -84,12 +84,12 @@ export function useAppointmentData(
     try {
       const allCalendars = await calendarService.fetchCalendarList(accessToken)
       
-      const targetCalendars = allCalendars.filter(cal => 
-        TARGET_CALENDAR_IDS.includes(cal.id)
-      )
+      // We'll consider non-primary calendars as doctor calendars
+      const targetCalendars = allCalendars.filter(cal => !cal.primary)
+      setDoctorCalendars(targetCalendars);
 
       if (targetCalendars.length === 0) {
-        setError(`Nenhum dos calendários alvo foi encontrado na sua conta Google. Verifique se os IDs de calendário estão corretos e se você tem permissão para acessá-los.`)
+        setError(`Nenhum calendário de médico foi encontrado na sua conta Google. Verifique se os calendários estão compartilhados com a conta conectada.`)
         setAppointments([])
         setLoading(false)
         return
@@ -98,24 +98,25 @@ export function useAppointmentData(
       console.log(`Buscando eventos para os calendários: ${targetCalendars.map(c => c.summary).join(', ')}`)
 
       const eventPromises = targetCalendars.map(cal => 
-        calendarService.fetchEvents(accessToken, cal.id)
+        calendarService.fetchEvents(accessToken, cal.id).then(events => ({
+          calendarId: cal.id,
+          calendarSummary: cal.summary,
+          events,
+        }))
       )
       
       const eventsPerCalendar = await Promise.all(eventPromises)
+      
       const allEvents = eventsPerCalendar.flat()
       
-      console.log('🎯 Raw events from Google Calendar:', {
-        totalEvents: allEvents.length,
-        eventSample: allEvents.slice(0, 3).map(event => ({
-          id: event.id,
-          summary: event.summary,
-          start: event.start,
-          status: event.status
-        }))
-      })
-      
-      const convertedAppointments = allEvents
-        .map(event => calendarService.convertToAppointment(event, user?.email || ''))
+      const convertedAppointments = eventsPerCalendar.flatMap(({ calendarId, calendarSummary, events }) =>
+          events.map(event => {
+            const appointment = calendarService.convertToAppointment(event, user?.email || '')
+            appointment.doctor.name = calendarSummary
+            appointment.doctor.calendarId = calendarId
+            return appointment
+          })
+        )
         .sort((a, b) => a.start.getTime() - b.start.getTime())
       
       console.log('🔄 Converted appointments before Supabase sync:', {
@@ -210,6 +211,7 @@ export function useAppointmentData(
 
   return {
     appointments,
+    doctorCalendars,
     loading,
     error,
     clearError,

@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react'
 import { Appointment } from '@/types/appointment'
 import { useToast } from '@/hooks/use-toast'
@@ -7,7 +6,7 @@ interface AppointmentOperations {
   rescheduleAppointment: (id: string, newStart: Date, newEnd: Date) => Promise<void>
   cancelAppointment: (id: string) => Promise<void>
   reactivateAppointment: (id: string) => Promise<void>
-  addAppointment: (appointmentData: any) => Promise<string>
+  addAppointment: (appointmentData: any, calendarId: string) => Promise<string>
   markAsCompleted: (id: string) => Promise<void>
 }
 
@@ -91,9 +90,9 @@ export function useAppointmentHandlers(operations: AppointmentOperations, paymen
     }
   }, [operations.reactivateAppointment, toast])
 
-  const handleAddAppointment = useCallback(async (appointmentData: any) => {
+  const handleAddAppointment = useCallback(async (appointmentData: any, calendarId: string) => {
     try {
-      const eventId = await operations.addAppointment(appointmentData)
+      const eventId = await operations.addAppointment(appointmentData, calendarId)
       toast({
         title: "Criado",
         description: "Agendamento criado com sucesso!",

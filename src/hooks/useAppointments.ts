@@ -11,6 +11,7 @@ export function useAppointments(accessToken: string | null, isGoogleSignedIn: bo
   const appointmentDataResult = useAppointmentData(accessToken, user, isGoogleSignedIn)
   const {
     appointments,
+    doctorCalendars,
     loading,
     error,
     clearError,
@@ -37,6 +38,7 @@ export function useAppointments(accessToken: string | null, isGoogleSignedIn: bo
 
   return {
     appointments,
+    doctorCalendars,
     loading,
     error,
     clearError,

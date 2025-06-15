@@ -1,4 +1,3 @@
-
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { DashboardContent } from '@/components/DashboardContent'
 import { useDashboardState } from '@/hooks/useDashboardState'
@@ -7,10 +6,13 @@ export default function Dashboard() {
   const {
     paymentAppointment,
     setPaymentAppointment,
+    doctorFilter,
+    setDoctorFilter,
     isGoogleInitialized,
     isGoogleSignedIn,
     currentGoogleUser,
     appointments,
+    doctorCalendars,
     todayAppointments,
     upcomingAppointments,
     pastAppointments,
@@ -54,6 +56,9 @@ export default function Dashboard() {
         error={error}
         currentGoogleUser={currentGoogleUser}
         appointments={appointments}
+        doctorCalendars={doctorCalendars}
+        doctorFilter={doctorFilter}
+        onDoctorFilterChange={setDoctorFilter}
         todayAppointments={todayAppointments}
         upcomingAppointments={upcomingAppointments}
         pastAppointments={pastAppointments}

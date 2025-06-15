@@ -1,4 +1,3 @@
-
 import { CalendarEvent, Appointment } from '@/types/appointment'
 import { CalendarListService } from './google/calendarListService'
 import { EventsService } from './google/eventsService'

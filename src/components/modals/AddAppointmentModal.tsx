@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
@@ -6,15 +7,20 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CalendarPlus } from 'lucide-react';
+import { CalendarListEntry } from '@/services/googleCalendar';
+
 interface AddAppointmentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddAppointment: (appointmentData: any) => Promise<string>;
+  onAddAppointment: (appointmentData: any, calendarId: string) => Promise<string>;
+  doctorCalendars: CalendarListEntry[];
 }
+
 export function AddAppointmentModal({
   isOpen,
   onClose,
-  onAddAppointment
+  onAddAppointment,
+  doctorCalendars
 }: AddAppointmentModalProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -25,7 +31,8 @@ export function AddAppointmentModal({
     time: '',
     duration: '60',
     type: 'consultation',
-    description: ''
+    description: '',
+    calendarId: ''
   });
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +52,7 @@ export function AddAppointmentModal({
         type: formData.type,
         description: formData.description
       };
-      const appointmentId = await onAddAppointment(appointmentData);
+      await onAddAppointment(appointmentData, formData.calendarId);
 
       // Reset form
       setFormData({
@@ -56,7 +63,8 @@ export function AddAppointmentModal({
         time: '',
         duration: '60',
         type: 'consultation',
-        description: ''
+        description: '',
+        calendarId: ''
       });
       onClose();
     } catch (error) {
@@ -84,6 +92,20 @@ export function AddAppointmentModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="calendarId">Médico(a) *</Label>
+            <Select value={formData.calendarId} onValueChange={value => handleInputChange('calendarId', value)} required>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um(a) médico(a)" />
+              </SelectTrigger>
+              <SelectContent>
+                {doctorCalendars.map(cal => (
+                  <SelectItem key={cal.id} value={cal.id}>{cal.summary}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        
           <div className="space-y-2">
             <Label htmlFor="patientName">Nome do Paciente *</Label>
             <Input id="patientName" value={formData.patientName} onChange={e => handleInputChange('patientName', e.target.value)} placeholder="Digite o nome completo" required />
@@ -149,7 +171,7 @@ export function AddAppointmentModal({
             <Button type="button" variant="outline" onClick={onClose} className="flex-1" disabled={loading}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading || !formData.patientName || !formData.date || !formData.time} className="flex-1">
+            <Button type="submit" disabled={loading || !formData.patientName || !formData.date || !formData.time || !formData.calendarId} className="flex-1">
               {loading ? 'Criando...' : 'Criar Agendamento'}
             </Button>
           </div>

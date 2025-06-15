@@ -9,6 +9,7 @@ import { AppointmentsKanbanGrid } from '@/components/appointments/AppointmentsKa
 import { AppointmentsSectionInstructions } from '@/components/appointments/AppointmentsSectionInstructions'
 import { RescheduleModal } from '@/components/modals/RescheduleModal'
 import { AddAppointmentModal } from '@/components/modals/AddAppointmentModal'
+import { CalendarListEntry } from '@/services/googleCalendar'
 
 interface AppointmentsSectionProps {
   todayAppointments: Appointment[]
@@ -17,12 +18,13 @@ interface AppointmentsSectionProps {
   isGoogleSignedIn: boolean
   isGoogleInitialized: boolean
   loading: boolean
+  doctorCalendars: CalendarListEntry[]
   onGoogleSignIn: () => Promise<void>
   onMarkAsCompleted: (appointment: Appointment) => void
   onRescheduleAppointment: (appointment: Appointment, newDate: Date) => Promise<void>
   onCancelAppointment: (appointment: Appointment) => Promise<void>
   onReactivateAppointment: (appointment: Appointment) => Promise<void>
-  onAddAppointment: (appointmentData: any) => Promise<string>
+  onAddAppointment: (appointmentData: any, calendarId: string) => Promise<string>
 }
 
 export function AppointmentsSection({
@@ -32,6 +34,7 @@ export function AppointmentsSection({
   isGoogleSignedIn,
   isGoogleInitialized,
   loading,
+  doctorCalendars,
   onGoogleSignIn,
   onMarkAsCompleted,
   onRescheduleAppointment,
@@ -119,6 +122,7 @@ export function AppointmentsSection({
         isOpen={addModalOpen}
         onClose={() => setAddModalOpen(false)}
         onAddAppointment={onAddAppointment}
+        doctorCalendars={doctorCalendars}
       />
     </div>
   )

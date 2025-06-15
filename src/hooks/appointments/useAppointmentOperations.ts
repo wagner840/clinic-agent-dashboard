@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react'
 import { GoogleCalendarService } from '@/services/googleCalendar'
 import { supabase } from '@/integrations/supabase/client'
@@ -107,19 +106,15 @@ export function useAppointmentOperations(
     end: Date
     type: 'consultation' | 'procedure' | 'follow-up'
     description?: string
-  }) => {
-    if (!accessToken || !user) return
+  }, calendarId: string) => {
+    if (!accessToken || !user) throw new Error("Acesso ou usuário não encontrado.");
 
     try {
-      const allCalendars = await calendarService.fetchCalendarList(accessToken)
-      const targetCalendars = allCalendars.filter(cal => TARGET_CALENDAR_IDS.includes(cal.id))
-
-      if (targetCalendars.length === 0) {
-        throw new Error('Nenhum calendário alvo encontrado')
+      if (!calendarId) {
+        throw new Error('Nenhum calendário de médico selecionado.');
       }
-
-      const primaryCalendar = targetCalendars[0]
-      const eventId = await calendarService.createAppointment(accessToken, primaryCalendar.id, appointmentData)
+      
+      const eventId = await calendarService.createAppointment(accessToken, calendarId, appointmentData)
       
       // The appointment will be synced to Supabase on the next fetchAppointments call
       await fetchAppointments()

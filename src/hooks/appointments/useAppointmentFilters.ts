@@ -1,4 +1,3 @@
-
 import { useMemo } from 'react'
 import { Appointment } from '@/types/appointment'
 
@@ -69,33 +68,23 @@ export function useAppointmentFilters(appointments: Appointment[]) {
 
   const getPastAppointments = useMemo(() => {
     const now = new Date()
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
     
     const filtered = appointments.filter(apt => {
-      const aptDate = new Date(apt.start)
-      const aptDateOnly = new Date(aptDate)
-      aptDateOnly.setHours(0, 0, 0, 0)
-      
-      // Inclui agendamentos de dias anteriores ou de hoje que já passaram
-      const isPastDay = aptDateOnly < today
-      const isTodayButPast = aptDateOnly.getTime() === today.getTime() && new Date(apt.start) < now
+      const aptStart = new Date(apt.start)
+      const isPast = aptStart < now
       const isScheduled = apt.status === 'scheduled'
       
-      console.log('⏰ Past filter check:', {
+      console.log('⏰ Past filter check (new logic):', {
         appointment: apt.patient.name,
         start: apt.start,
-        aptDateOnly: aptDateOnly.toDateString(),
-        today: today.toDateString(),
         now,
-        isPastDay,
-        isTodayButPast,
+        isPast,
         status: apt.status,
         isScheduled,
-        included: (isPastDay || isTodayButPast) && isScheduled
+        included: isPast && isScheduled
       })
       
-      return (isPastDay || isTodayButPast) && isScheduled
+      return isPast && isScheduled
     }).sort((a, b) => new Date(b.start).getTime() - new Date(a.start).getTime())
     
     console.log('⏰ Past appointments result:', filtered.length)

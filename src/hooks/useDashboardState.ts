@@ -1,10 +1,10 @@
-
 import { useGoogleAuth } from '@/hooks/useGoogleAuth'
 import { useAppointments } from '@/hooks/useAppointments'
 import { usePaymentState } from '@/hooks/dashboard/usePaymentState'
 import { useAppointmentHandlers } from '@/hooks/dashboard/useAppointmentHandlers'
 import { useGoogleAuthHandlers } from '@/hooks/dashboard/useGoogleAuthHandlers'
 import { useErrorHandlers } from '@/hooks/dashboard/useErrorHandlers'
+import { useState, useMemo } from 'react'
 
 export function useDashboardState() {
   // Always call hooks in the same order - no conditional calls
@@ -26,6 +26,7 @@ export function useDashboardState() {
   const appointmentsResult = useAppointments(accessToken, isGoogleSignedIn)
   const {
     appointments,
+    doctorCalendars,
     loading: appointmentsLoading,
     error: appointmentsError,
     fetchAppointments,
@@ -41,6 +42,15 @@ export function useDashboardState() {
     addAppointment,
     markAsCompleted
   } = appointmentsResult
+
+  const [doctorFilter, setDoctorFilter] = useState('all')
+
+  const filteredAppointments = useMemo(() => {
+    if (doctorFilter === 'all' || !doctorFilter) {
+      return appointments
+    }
+    return appointments.filter(apt => apt.doctor.calendarId === doctorFilter)
+  }, [appointments, doctorFilter])
 
   // Initialize specialized hooks
   const paymentState = usePaymentState(fetchAppointments)
@@ -73,11 +83,11 @@ export function useDashboardState() {
   const loading = authLoading || (isGoogleSignedIn && appointmentsLoading)
   const error = authError || appointmentsError
   
-  const todayAppointments = getTodayAppointments()
-  const upcomingAppointments = getUpcomingAppointments()
-  const pastAppointments = getPastAppointments()
-  const completedAppointments = getCompletedAppointments()
-  const cancelledAppointments = getCancelledAppointments()
+  const todayAppointments = getTodayAppointments().filter(apt => filteredAppointments.includes(apt))
+  const upcomingAppointments = getUpcomingAppointments().filter(apt => filteredAppointments.includes(apt))
+  const pastAppointments = getPastAppointments().filter(apt => filteredAppointments.includes(apt))
+  const completedAppointments = getCompletedAppointments().filter(apt => filteredAppointments.includes(apt))
+  const cancelledAppointments = getCancelledAppointments().filter(apt => filteredAppointments.includes(apt))
   
   const currentGoogleUser = isGoogleSignedIn && googleProfile ? {
     email: googleProfile.getEmail(),
@@ -89,6 +99,8 @@ export function useDashboardState() {
     // State
     paymentAppointment,
     setPaymentAppointment,
+    doctorFilter,
+    setDoctorFilter,
     
     // Google Auth
     isGoogleInitialized,
@@ -96,7 +108,8 @@ export function useDashboardState() {
     currentGoogleUser,
     
     // Data
-    appointments,
+    appointments: filteredAppointments,
+    doctorCalendars,
     todayAppointments,
     upcomingAppointments,
     pastAppointments,
