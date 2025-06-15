@@ -1,9 +1,6 @@
 
 import { Card, CardContent } from '@/components/ui/card'
 import { Appointment } from '@/types/appointment'
-import {
-  TooltipProvider,
-} from "@/components/ui/tooltip"
 import { AppointmentDetails } from '@/components/appointment/AppointmentDetails'
 import { AppointmentActions } from '@/components/appointment/AppointmentActions'
 import { AppointmentContextMenu } from '@/components/appointment/AppointmentContextMenu'
@@ -25,27 +22,28 @@ export function AppointmentCard({
   const isCancelled = appointment.status === 'cancelled'
 
   return (
-    <TooltipProvider>
-      <AppointmentContextMenu 
-        appointment={appointment} 
-        onMarkAsCompleted={onMarkAsCompleted}
-        onCancelAppointment={onCancelAppointment}
-        onReactivateAppointment={onReactivateAppointment}
-      >
-        <Card className={`hover:shadow-lg transition-all duration-200 relative border-l-4 ${
-          isCompleted ? 'border-l-green-500 bg-green-50/30' : 
-          isCancelled ? 'border-l-red-500 bg-red-50/30' : 
-          'border-l-blue-500 hover:border-l-blue-600'
-        }`}>
-          <CardContent className="p-4">
-            <AppointmentDetails appointment={appointment} />
-            <AppointmentActions 
-              appointment={appointment} 
-              onMarkAsCompleted={onMarkAsCompleted} 
-            />
-          </CardContent>
-        </Card>
-      </AppointmentContextMenu>
-    </TooltipProvider>
+    <AppointmentContextMenu 
+      appointment={appointment} 
+      onMarkAsCompleted={onMarkAsCompleted}
+      onCancelAppointment={onCancelAppointment}
+      onReactivateAppointment={onReactivateAppointment}
+    >
+      <Card className={`
+        transition-all duration-200 cursor-pointer
+        hover:shadow-md hover:scale-[1.02] active:scale-[0.98]
+        relative border-l-4 
+        ${isCompleted ? 'border-l-green-500 bg-green-50/50' : 
+          isCancelled ? 'border-l-red-500 bg-red-50/50' : 
+          'border-l-blue-500 hover:border-l-blue-600'}
+      `}>
+        <CardContent className="p-3 sm:p-4">
+          <AppointmentDetails appointment={appointment} />
+          <AppointmentActions 
+            appointment={appointment} 
+            onMarkAsCompleted={onMarkAsCompleted} 
+          />
+        </CardContent>
+      </Card>
+    </AppointmentContextMenu>
   )
 }

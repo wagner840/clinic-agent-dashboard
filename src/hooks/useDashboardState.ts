@@ -1,11 +1,13 @@
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useGoogleAuth } from '@/hooks/useGoogleAuth'
 import { useAppointments } from '@/hooks/useAppointments'
 import { Appointment } from '@/types/appointment'
+import { useToast } from '@/hooks/use-toast'
 
 export function useDashboardState() {
   const [paymentAppointment, setPaymentAppointment] = useState<Appointment | null>(null)
+  const { toast } = useToast()
 
   const { 
     loading: authLoading, 
@@ -41,10 +43,10 @@ export function useDashboardState() {
   const loading = authLoading || (isGoogleSignedIn && appointmentsLoading)
   const error = authError || appointmentsError
   
-  const clearError = () => {
+  const clearError = useCallback(() => {
     if (authError) clearAuthError()
     if (appointmentsError) clearAppointmentsError()
-  }
+  }, [authError, appointmentsError, clearAuthError, clearAppointmentsError])
 
   const todayAppointments = getTodayAppointments()
   const upcomingAppointments = getUpcomingAppointments()
@@ -58,57 +60,155 @@ export function useDashboardState() {
     imageUrl: googleProfile.getImageUrl()
   } : null
 
-  const handleGoogleAuth = async (): Promise<void> => {
-    if (isGoogleSignedIn) {
-      await googleSignOut()
-    } else {
-      await googleSignIn()
+  const handleGoogleAuth = useCallback(async (): Promise<void> => {
+    try {
+      if (isGoogleSignedIn) {
+        await googleSignOut()
+        toast({
+          title: "Desconectado",
+          description: "Você foi desconectado do Google.",
+        })
+      } else {
+        await googleSignIn()
+        toast({
+          title: "Conectado",
+          description: "Conectado ao Google com sucesso!",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao conectar/desconectar do Google.",
+        variant: "destructive"
+      })
     }
-  }
+  }, [isGoogleSignedIn, googleSignIn, googleSignOut, toast])
 
-  const handleSwitchAccount = async (): Promise<void> => {
-    console.log('Botão de troca de conta clicado')
-    await googleSwitchAccount()
-  }
+  const handleSwitchAccount = useCallback(async (): Promise<void> => {
+    try {
+      await googleSwitchAccount()
+      toast({
+        title: "Conta alterada",
+        description: "Conta do Google alterada com sucesso!",
+      })
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao trocar conta do Google.",
+        variant: "destructive"
+      })
+    }
+  }, [googleSwitchAccount, toast])
 
-  const handleMarkAsCompleted = async (appointment: Appointment) => {
+  const handleMarkAsCompleted = useCallback(async (appointment: Appointment) => {
     try {
       await markAsCompleted(appointment.id)
-      // No need to open payment dialog, just mark as completed
+      toast({
+        title: "Agendamento finalizado",
+        description: `${appointment.patient.name} foi marcado como concluído.`,
+      })
     } catch (error: any) {
-      console.error('Error marking appointment as completed:', error)
+      toast({
+        title: "Erro",
+        description: "Erro ao finalizar agendamento.",
+        variant: "destructive"
+      })
     }
-  }
+  }, [markAsCompleted, toast])
 
-  const handleRetry = async () => {
-    clearError()
-    if (appointmentsError) {
-      await fetchAppointments()
+  const handleRetry = useCallback(async () => {
+    try {
+      clearError()
+      if (appointmentsError) {
+        await fetchAppointments()
+        toast({
+          title: "Sincronizado",
+          description: "Agendamentos sincronizados com sucesso!",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao sincronizar agendamentos.",
+        variant: "destructive"
+      })
     }
-  }
+  }, [clearError, appointmentsError, fetchAppointments, toast])
 
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = useCallback(() => {
     fetchAppointments()
     setPaymentAppointment(null)
-  }
+    toast({
+      title: "Pagamento registrado",
+      description: "Pagamento registrado com sucesso!",
+    })
+  }, [fetchAppointments, toast])
 
-  const handleRescheduleAppointment = async (appointment: Appointment, newDate: Date) => {
-    const duration = appointment.end.getTime() - appointment.start.getTime()
-    const newEnd = new Date(newDate.getTime() + duration)
-    await rescheduleAppointment(appointment.id, newDate, newEnd)
-  }
+  const handleRescheduleAppointment = useCallback(async (appointment: Appointment, newDate: Date) => {
+    try {
+      const duration = appointment.end.getTime() - appointment.start.getTime()
+      const newEnd = new Date(newDate.getTime() + duration)
+      await rescheduleAppointment(appointment.id, newDate, newEnd)
+      toast({
+        title: "Reagendado",
+        description: `${appointment.patient.name} foi reagendado com sucesso.`,
+      })
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao reagendar agendamento.",
+        variant: "destructive"
+      })
+    }
+  }, [rescheduleAppointment, toast])
 
-  const handleCancelAppointment = async (appointment: Appointment) => {
-    await cancelAppointment(appointment.id)
-  }
+  const handleCancelAppointment = useCallback(async (appointment: Appointment) => {
+    try {
+      await cancelAppointment(appointment.id)
+      toast({
+        title: "Cancelado",
+        description: `${appointment.patient.name} foi cancelado.`,
+      })
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao cancelar agendamento.",
+        variant: "destructive"
+      })
+    }
+  }, [cancelAppointment, toast])
 
-  const handleReactivateAppointment = async (appointment: Appointment) => {
-    await reactivateAppointment(appointment.id)
-  }
+  const handleReactivateAppointment = useCallback(async (appointment: Appointment) => {
+    try {
+      await reactivateAppointment(appointment.id)
+      toast({
+        title: "Reativado",
+        description: `${appointment.patient.name} foi reativado.`,
+      })
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao reativar agendamento.",
+        variant: "destructive"
+      })
+    }
+  }, [reactivateAppointment, toast])
 
-  const handleAddAppointment = async (appointmentData: any) => {
-    await addAppointment(appointmentData)
-  }
+  const handleAddAppointment = useCallback(async (appointmentData: any) => {
+    try {
+      await addAppointment(appointmentData)
+      toast({
+        title: "Criado",
+        description: "Agendamento criado com sucesso!",
+      })
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao criar agendamento.",
+        variant: "destructive"
+      })
+    }
+  }, [addAppointment, toast])
 
   return {
     // State

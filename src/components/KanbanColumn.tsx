@@ -27,15 +27,24 @@ export function KanbanColumn({
   onCancelAppointment,
   onReactivateAppointment
 }: KanbanColumnProps) {
+  const getEmptyMessage = () => {
+    switch (id) {
+      case 'today': return 'Nenhum agendamento para hoje'
+      case 'upcoming': return 'Nenhum agendamento próximo'
+      case 'cancelled': return 'Nenhum agendamento cancelado'
+      default: return 'Nenhum agendamento'
+    }
+  }
+
   return (
     <Card className="h-fit">
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-3 sm:pb-4">
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Icon className="h-5 w-5" />
-            <span className="text-lg">{title}</span>
+            <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="text-base sm:text-lg">{title}</span>
           </div>
-          <Badge className={`${badgeColor} text-sm font-medium`}>
+          <Badge className={`${badgeColor} text-xs sm:text-sm font-medium`}>
             {appointments.length}
           </Badge>
         </CardTitle>
@@ -46,18 +55,15 @@ export function KanbanColumn({
             <div
               ref={provided.innerRef}
               {...provided.droppableProps}
-              className={`space-y-3 min-h-[200px] p-2 rounded-lg transition-colors ${
-                snapshot.isDraggingOver ? 'bg-blue-50 border-2 border-dashed border-blue-300' : ''
-              }`}
+              className={`
+                space-y-3 min-h-[200px] p-2 rounded-lg transition-colors
+                ${snapshot.isDraggingOver ? 'bg-blue-50 border-2 border-dashed border-blue-300' : ''}
+              `}
             >
               {appointments.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  <Icon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-sm">
-                    {id === 'today' && 'Nenhum agendamento para hoje'}
-                    {id === 'upcoming' && 'Nenhum agendamento próximo'}
-                    {id === 'cancelled' && 'Nenhum agendamento cancelado'}
-                  </p>
+                  <Icon className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-4 text-gray-300" />
+                  <p className="text-xs sm:text-sm">{getEmptyMessage()}</p>
                 </div>
               ) : (
                 appointments.map((appointment, index) => (
@@ -72,13 +78,14 @@ export function KanbanColumn({
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
-                        className={`${
-                          snapshot.isDragging ? 'rotate-3 shadow-lg' : ''
-                        } ${
-                          appointment.status === 'completed'
+                        className={`
+                          transition-transform duration-200
+                          ${snapshot.isDragging ? 'rotate-3 shadow-lg scale-105' : ''}
+                          ${appointment.status === 'completed'
                             ? 'opacity-60 cursor-not-allowed' 
                             : 'cursor-grab active:cursor-grabbing'
-                        }`}
+                          }
+                        `}
                       >
                         <AppointmentCard
                           appointment={appointment}

@@ -25,10 +25,10 @@ export function AppointmentsKanbanGrid({
 }: AppointmentsKanbanGridProps) {
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <KanbanColumn
           id="today"
-          title="Agendamentos de Hoje"
+          title="Hoje"
           appointments={todayAppointments}
           icon={Calendar}
           badgeColor="bg-green-100 text-green-800 border-green-200"
@@ -39,7 +39,7 @@ export function AppointmentsKanbanGrid({
         
         <KanbanColumn
           id="upcoming"
-          title="Próximos Agendamentos"
+          title="Próximos"
           appointments={upcomingAppointments}
           icon={Clock}
           badgeColor="bg-blue-100 text-blue-800 border-blue-200"
@@ -50,7 +50,7 @@ export function AppointmentsKanbanGrid({
         
         <KanbanColumn
           id="cancelled"
-          title="Agendamentos Cancelados"
+          title="Cancelados"
           appointments={cancelledAppointments}
           icon={XCircle}
           badgeColor="bg-red-100 text-red-800 border-red-200"

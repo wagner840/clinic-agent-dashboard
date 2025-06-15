@@ -11,24 +11,19 @@ interface AppointmentDetailsProps {
 
 export function AppointmentDetails({ appointment }: AppointmentDetailsProps) {
   return (
-    <>
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex-1 pr-2">
-          <h3 className="font-semibold text-sm text-gray-900 mb-1">
+    <div className="space-y-3">
+      {/* Header with patient name and badges */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-sm sm:text-base text-gray-900 truncate">
             {appointment.patient.name}
           </h3>
-          <div className="flex items-center text-xs text-gray-600 mb-1">
-            <Calendar className="h-3 w-3 mr-1" />
-            <span>{formatShortDate(appointment.start)}</span>
-          </div>
-          <div className="flex items-center text-xs text-gray-600 mb-2">
-            <Clock className="h-3 w-3 mr-1" />
-            <span>
-              {formatTime(appointment.start)} - {formatTime(appointment.end)}
-            </span>
+          <div className="flex items-center text-xs text-gray-600 mt-1">
+            <Calendar className="h-3 w-3 mr-1 flex-shrink-0" />
+            <span className="truncate">{formatShortDate(appointment.start)}</span>
           </div>
         </div>
-        <div className="flex flex-col items-end space-y-2">
+        <div className="flex flex-col items-end gap-1">
           <Badge className={`${getStatusColor(appointment.status)} text-xs font-medium`}>
             {getStatusText(appointment.status)}
           </Badge>
@@ -38,24 +33,34 @@ export function AppointmentDetails({ appointment }: AppointmentDetailsProps) {
         </div>
       </div>
 
+      {/* Time */}
+      <div className="flex items-center text-xs text-gray-600">
+        <Clock className="h-3 w-3 mr-1 flex-shrink-0" />
+        <span>
+          {formatTime(appointment.start)} - {formatTime(appointment.end)}
+        </span>
+      </div>
+
+      {/* Description */}
       {appointment.description && (
-        <p className="text-xs text-gray-600 mb-3 bg-gray-50 p-2 rounded">
+        <div className="bg-gray-50 p-2 rounded text-xs text-gray-600">
           {appointment.description}
-        </p>
+        </div>
       )}
 
-      <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-        <div className="flex items-center">
-          <User className="h-3 w-3 mr-1" />
-          <span>{appointment.patient.email || 'Sem email'}</span>
+      {/* Contact info */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-500">
+        <div className="flex items-center min-w-0">
+          <User className="h-3 w-3 mr-1 flex-shrink-0" />
+          <span className="truncate">{appointment.patient.email || 'Sem email'}</span>
         </div>
         {appointment.patient.phone && (
-          <div className="flex items-center">
-            <Phone className="h-3 w-3 mr-1" />
-            <span>{appointment.patient.phone}</span>
+          <div className="flex items-center min-w-0">
+            <Phone className="h-3 w-3 mr-1 flex-shrink-0" />
+            <span className="truncate">{appointment.patient.phone}</span>
           </div>
         )}
       </div>
-    </>
+    </div>
   )
 }

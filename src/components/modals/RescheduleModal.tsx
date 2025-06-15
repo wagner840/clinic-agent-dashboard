@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Calendar, Clock, User } from 'lucide-react'
+import { Calendar, Clock, User, Loader2 } from 'lucide-react'
 import { Appointment } from '@/types/appointment'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -34,11 +34,9 @@ export function RescheduleModal({
 
   useEffect(() => {
     if (appointment && isOpen) {
-      // Definir a data de hoje como padrão
       const today = new Date()
       setDate(format(today, 'yyyy-MM-dd'))
       
-      // Manter o horário original do agendamento
       const originalTime = format(appointment.start, 'HH:mm')
       setTime(originalTime)
     }
@@ -68,20 +66,20 @@ export function RescheduleModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md mx-4">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-lg">
             <Calendar className="h-5 w-5" />
             Alterar Horário
           </DialogTitle>
           <DialogDescription>
-            Altere o horário do agendamento para hoje
+            Altere o horário do agendamento
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Informações do agendamento */}
-          <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+          {/* Patient info card */}
+          <div className="bg-gray-50 p-3 rounded-lg space-y-2">
             <div className="flex items-center gap-2 text-sm">
               <User className="h-4 w-4 text-gray-500" />
               <span className="font-medium">{appointment.patient.name}</span>
@@ -93,35 +91,37 @@ export function RescheduleModal({
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="date">Nova Data</Label>
+                <Label htmlFor="date" className="text-sm font-medium">Nova Data</Label>
                 <Input
                   id="date"
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
+                  className="text-sm"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="time">Novo Horário</Label>
+                <Label htmlFor="time" className="text-sm font-medium">Novo Horário</Label>
                 <Input
                   id="time"
                   type="time"
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
+                  className="text-sm"
                   required
                 />
               </div>
             </div>
 
-            <div className="flex gap-2 pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <Button
                 type="button"
                 variant="outline"
                 onClick={onClose}
-                className="flex-1"
+                className="flex-1 order-2 sm:order-1"
                 disabled={loading}
               >
                 Cancelar
@@ -129,9 +129,16 @@ export function RescheduleModal({
               <Button
                 type="submit"
                 disabled={loading || !date || !time}
-                className="flex-1"
+                className="flex-1 order-1 sm:order-2"
               >
-                {loading ? 'Alterando...' : 'Confirmar'}
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Alterando...
+                  </>
+                ) : (
+                  'Confirmar'
+                )}
               </Button>
             </div>
           </form>

@@ -79,7 +79,7 @@ export function DashboardContent({
         currentGoogleUser={currentGoogleUser}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <GoogleAuthAlerts
           isGoogleInitialized={isGoogleInitialized}
           isGoogleSignedIn={isGoogleSignedIn}
@@ -91,39 +91,41 @@ export function DashboardContent({
           currentGoogleUser={currentGoogleUser}
         />
 
-        <DashboardStats 
-          totalAppointments={appointments.length}
-          todayAppointments={todayAppointments.length}
-          upcomingAppointments={upcomingAppointments.length}
-        />
+        <div className="space-y-6 sm:space-y-8">
+          <DashboardStats 
+            totalAppointments={appointments.length}
+            todayAppointments={todayAppointments.length}
+            upcomingAppointments={upcomingAppointments.length}
+          />
 
-        <AppointmentsSection
-          todayAppointments={todayAppointments}
-          upcomingAppointments={upcomingAppointments}
-          cancelledAppointments={cancelledAppointments}
-          isGoogleSignedIn={isGoogleSignedIn}
-          isGoogleInitialized={isGoogleInitialized}
-          loading={loading && isGoogleSignedIn}
-          onGoogleSignIn={onGoogleSignIn}
-          onMarkAsCompleted={onMarkAsCompleted}
-          onRescheduleAppointment={onRescheduleAppointment}
-          onCancelAppointment={onCancelAppointment}
-          onReactivateAppointment={onReactivateAppointment}
-          onAddAppointment={onAddAppointment}
-        />
+          <AppointmentsSection
+            todayAppointments={todayAppointments}
+            upcomingAppointments={upcomingAppointments}
+            cancelledAppointments={cancelledAppointments}
+            isGoogleSignedIn={isGoogleSignedIn}
+            isGoogleInitialized={isGoogleInitialized}
+            loading={loading && isGoogleSignedIn}
+            onGoogleSignIn={onGoogleSignIn}
+            onMarkAsCompleted={onMarkAsCompleted}
+            onRescheduleAppointment={onRescheduleAppointment}
+            onCancelAppointment={onCancelAppointment}
+            onReactivateAppointment={onReactivateAppointment}
+            onAddAppointment={onAddAppointment}
+          />
 
-        {isGoogleSignedIn && !loading && (
-          <div className="mt-8 space-y-6">
-            <PastAppointmentsTable
-              appointments={pastAppointments}
-              onMarkAsCompleted={onMarkAsCompleted}
-            />
-            
-            <CompletedAppointmentsTable
-              appointments={completedAppointments}
-            />
-          </div>
-        )}
+          {isGoogleSignedIn && !loading && (
+            <div className="space-y-6">
+              <PastAppointmentsTable
+                appointments={pastAppointments}
+                onMarkAsCompleted={onMarkAsCompleted}
+              />
+              
+              <CompletedAppointmentsTable
+                appointments={completedAppointments}
+              />
+            </div>
+          )}
+        </div>
       </main>
 
       <PaymentDialog
