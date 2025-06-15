@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 
 const GOOGLE_CLIENT_ID = '334488532936-0s8r9hp9l50cr5u34vk4ujk2v6ujm6v0.apps.googleusercontent.com'
@@ -33,39 +32,31 @@ export function useGoogleOAuth() {
         await loadGapiScript()
       }
 
-      console.log('Carregando auth2...')
+      console.log('Carregando client:auth2...')
       await new Promise<void>((resolve) => {
-        window.gapi.load('auth2', resolve)
+        window.gapi.load('client:auth2', resolve)
       })
 
-      console.log('Inicializando cliente Google...')
-      await window.gapi.client.init({
+      console.log('Inicializando Google Auth2...')
+      await window.gapi.auth2.init({
         clientId: GOOGLE_CLIENT_ID,
         scope: GOOGLE_SCOPES,
-        discoveryDocs: [DISCOVERY_DOC]
       })
 
-      console.log('Aguardando instância de auth...')
-      // Aguardar até que a instância de auth esteja disponível
-      let authInstance = null
-      let attempts = 0
-      const maxAttempts = 10
+      console.log('Inicializando Google API Client...')
+      await window.gapi.client.init({
+        discoveryDocs: [DISCOVERY_DOC],
+      })
       
-      while (!authInstance && attempts < maxAttempts) {
-        authInstance = window.gapi.auth2.getAuthInstance()
-        if (!authInstance) {
-          console.log(`Tentativa ${attempts + 1}: aguardando instância de auth...`)
-          await new Promise(resolve => setTimeout(resolve, 100))
-          attempts++
-        }
-      }
+      console.log('Obtendo instância de auth...')
+      const authInstance = window.gapi.auth2.getAuthInstance()
       
       if (!authInstance) {
-        console.error('Falha ao obter instância de auth após múltiplas tentativas')
+        console.error('Falha ao obter instância de auth após inicialização correta.')
         throw new Error('Falha ao inicializar instância de autenticação Google')
       }
 
-      console.log('Instância de auth obtida com sucesso')
+      console.log('Instância de auth obtida com sucesso!')
       const isSignedIn = authInstance.isSignedIn.get()
       
       setAuthState(prev => ({
