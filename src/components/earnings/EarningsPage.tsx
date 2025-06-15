@@ -9,8 +9,13 @@ import { EarningsDebugInfo } from './EarningsDebugInfo'
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/integrations/supabase/client'
+import { Appointment } from '@/types/appointment'
 
-export function EarningsPage() {
+interface EarningsPageProps {
+  appointments?: Appointment[]
+}
+
+export function EarningsPage({ appointments = [] }: EarningsPageProps) {
   const { user } = useAuth()
   const [showChartsModal, setShowChartsModal] = useState(false)
   const {
@@ -95,6 +100,7 @@ export function EarningsPage() {
         isOpen={showChartsModal}
         onClose={() => setShowChartsModal(false)}
         totalEarnings={totalEarnings}
+        appointments={appointments}
       />
     </div>
   )

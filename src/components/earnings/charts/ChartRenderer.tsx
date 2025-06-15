@@ -53,7 +53,7 @@ export function ChartRenderer({
 }: ChartRendererProps) {
   if (chartType === 'pie') {
     return (
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={400}>
         <PieChart>
           <Pie
             data={pieData}
@@ -61,7 +61,7 @@ export function ChartRenderer({
             cy="50%"
             labelLine={false}
             label={({ name, percentage }) => `${name} (${percentage}%)`}
-            outerRadius={80}
+            outerRadius={120}
             fill="#8884d8"
             dataKey="value"
           >
@@ -83,15 +83,16 @@ export function ChartRenderer({
 
   if (chartType === 'line') {
     return (
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={chartData}>
+      <ResponsiveContainer width="100%" height={400}>
+        <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
           <XAxis 
-            dataKey="name" 
+            dataKey="fullName"
             className="text-xs fill-muted-foreground"
             angle={-45}
             textAnchor="end"
-            height={60}
+            height={80}
+            interval={0}
           />
           <YAxis className="text-xs fill-muted-foreground" />
           <ChartTooltip 
@@ -132,15 +133,16 @@ export function ChartRenderer({
   }
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={chartData}>
+    <ResponsiveContainer width="100%" height={400}>
+      <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
         <XAxis 
-          dataKey="name" 
+          dataKey="fullName"
           className="text-xs fill-muted-foreground"
           angle={-45}
           textAnchor="end"
-          height={60}
+          height={80}
+          interval={0}
         />
         <YAxis className="text-xs fill-muted-foreground" />
         <ChartTooltip 

@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ChartContainer } from '@/components/ui/chart'
 import { TrendingUp, BarChart3, PieChart as PieChartIcon, X } from 'lucide-react'
 import { DoctorTotalEarnings } from '@/types/earnings'
+import { Appointment } from '@/types/appointment'
 import { ChartFilters, ChartFilterState } from './ChartFilters'
 import { ChartControls } from './charts/ChartControls'
 import { ChartRenderer } from './charts/ChartRenderer'
@@ -18,9 +19,10 @@ interface ClinicChartsModalProps {
   isOpen: boolean
   onClose: () => void
   totalEarnings: DoctorTotalEarnings[]
+  appointments?: Appointment[]
 }
 
-export function ClinicChartsModal({ isOpen, onClose, totalEarnings }: ClinicChartsModalProps) {
+export function ClinicChartsModal({ isOpen, onClose, totalEarnings, appointments = [] }: ClinicChartsModalProps) {
   const [chartType, setChartType] = useState<'bar' | 'line' | 'pie'>('bar')
   const [dataType, setDataType] = useState<'amount' | 'appointments'>('amount')
   const [viewMode, setViewMode] = useState<'combined' | 'individual'>('combined')
@@ -40,7 +42,7 @@ export function ClinicChartsModal({ isOpen, onClose, totalEarnings }: ClinicChar
     }).format(value)
   }
 
-  const dataProcessor = new ChartDataProcessor(totalEarnings, filters)
+  const dataProcessor = new ChartDataProcessor(totalEarnings, filters, appointments)
   const filteredEarnings = dataProcessor.getFilteredEarnings()
   
   const prepareChartData = () => {

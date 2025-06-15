@@ -78,6 +78,7 @@ export function DashboardContent(props: DashboardContentProps) {
         onSyncAppointments={props.onSyncAppointments}
         onOpenSettings={() => props.onSettingsChange(true)}
         onBackToDashboard={() => setShowEarnings(false)}
+        appointments={props.appointments}
       />
     )
   }
@@ -132,6 +133,7 @@ export function DashboardContent(props: DashboardContentProps) {
           completedAppointments={props.completedAppointments}
           cancelledAppointments={props.cancelledAppointments}
           clinicTotalEarnings={clinicTotals.totalAmount}
+          totalCancelledAppointments={props.cancelledAppointments.length}
           onGoogleSignIn={props.onGoogleSignIn}
           onMarkAsCompleted={props.onMarkAsCompleted}
           onRescheduleAppointment={props.onRescheduleAppointment}

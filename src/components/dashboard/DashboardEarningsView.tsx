@@ -2,6 +2,8 @@
 import { DashboardHeader } from '@/components/DashboardHeader'
 import { EarningsPage } from '@/components/earnings/EarningsPage'
 import { Button } from '@/components/ui/button'
+import { ArrowLeft } from 'lucide-react'
+import { Appointment } from '@/types/appointment'
 
 interface DashboardEarningsViewProps {
   isGoogleInitialized: boolean
@@ -17,9 +19,10 @@ interface DashboardEarningsViewProps {
   onSyncAppointments: () => Promise<void>
   onOpenSettings: () => void
   onBackToDashboard: () => void
+  appointments?: Appointment[]
 }
 
-export function DashboardEarningsView({
+export function DashboardEarningsView({ 
   isGoogleInitialized,
   isGoogleSignedIn,
   loading,
@@ -28,7 +31,8 @@ export function DashboardEarningsView({
   onSwitchAccount,
   onSyncAppointments,
   onOpenSettings,
-  onBackToDashboard
+  onBackToDashboard,
+  appointments = []
 }: DashboardEarningsViewProps) {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -48,12 +52,14 @@ export function DashboardEarningsView({
           <Button 
             variant="outline" 
             onClick={onBackToDashboard}
-            className="mb-4"
+            className="flex items-center space-x-2"
           >
-            ← Voltar ao Dashboard
+            <ArrowLeft className="h-4 w-4" />
+            <span>Voltar ao Dashboard</span>
           </Button>
         </div>
-        <EarningsPage />
+
+        <EarningsPage appointments={appointments} />
       </main>
     </div>
   )

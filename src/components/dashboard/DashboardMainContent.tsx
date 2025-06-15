@@ -17,6 +17,7 @@ interface DashboardMainContentProps {
   completedAppointments: Appointment[]
   cancelledAppointments: Appointment[]
   clinicTotalEarnings: number
+  totalCancelledAppointments: number
   onGoogleSignIn: () => Promise<void>
   onMarkAsCompleted: (appointment: Appointment) => void
   onRescheduleAppointment: (appointment: Appointment, newDate: Date) => Promise<void>
@@ -36,6 +37,7 @@ export function DashboardMainContent({
   completedAppointments,
   cancelledAppointments,
   clinicTotalEarnings,
+  totalCancelledAppointments,
   onGoogleSignIn,
   onMarkAsCompleted,
   onRescheduleAppointment,
@@ -50,6 +52,7 @@ export function DashboardMainContent({
         todayAppointments={todayAppointments.length}
         upcomingAppointments={upcomingAppointments.length}
         clinicTotalEarnings={clinicTotalEarnings}
+        totalCancelledAppointments={totalCancelledAppointments}
       />
 
       <AppointmentsSection
