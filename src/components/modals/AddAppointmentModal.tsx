@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import {
   Dialog,
@@ -17,7 +16,7 @@ import { CalendarPlus } from 'lucide-react'
 interface AddAppointmentModalProps {
   isOpen: boolean
   onClose: () => void
-  onAddAppointment: (appointmentData: any) => Promise<void>
+  onAddAppointment: (appointmentData: any) => Promise<string>
 }
 
 export function AddAppointmentModal({
@@ -59,7 +58,7 @@ export function AddAppointmentModal({
         description: formData.description
       }
 
-      await onAddAppointment(appointmentData)
+      const appointmentId = await onAddAppointment(appointmentData)
       
       // Reset form
       setFormData({

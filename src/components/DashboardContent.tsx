@@ -1,4 +1,3 @@
-
 import { DashboardStats } from '@/components/DashboardStats'
 import { DashboardHeader } from '@/components/DashboardHeader'
 import { GoogleAuthAlerts } from '@/components/GoogleAuthAlerts'
@@ -37,7 +36,7 @@ interface DashboardContentProps {
   onRescheduleAppointment: (appointment: Appointment, newDate: Date) => Promise<void>
   onCancelAppointment: (appointment: Appointment) => Promise<void>
   onReactivateAppointment: (appointment: Appointment) => Promise<void>
-  onAddAppointment: (appointmentData: any) => Promise<void>
+  onAddAppointment: (appointmentData: any) => Promise<string>
 }
 
 export function DashboardContent({

@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { Appointment } from '@/types/appointment'
 import { useToast } from "@/hooks/use-toast"
@@ -23,7 +22,7 @@ interface AppointmentsSectionProps {
   onRescheduleAppointment: (appointment: Appointment, newDate: Date) => Promise<void>
   onCancelAppointment: (appointment: Appointment) => Promise<void>
   onReactivateAppointment: (appointment: Appointment) => Promise<void>
-  onAddAppointment: (appointmentData: any) => Promise<void>
+  onAddAppointment: (appointmentData: any) => Promise<string>
 }
 
 export function AppointmentsSection({
